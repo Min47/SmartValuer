@@ -1,0 +1,7 @@
+requests==2.32.3
+beautifulsoup4==4.13.3
+pandas==2.2.3
+selenium==4.31.0
+sqlalchemy==2.0.40
+pymysql==1.1.1
+python-dotenv==1.1.0
