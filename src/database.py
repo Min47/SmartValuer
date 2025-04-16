@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
@@ -13,8 +13,21 @@ DATABASE_HOST = os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST"))
 DATABASE_PORT = os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT"))
 DATABASE_NAME = os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME"))
 
-# Construct the DATABASE_URL
-DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
+# Construct the DATABASE_URL without specifying the database name
+BASE_DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}"
+
+# Create an engine to connect to the server
+base_engine = create_engine(BASE_DATABASE_URL)
+
+# Check if the database exists, and create it if it doesn't
+with base_engine.connect() as connection:
+    result = connection.execute(text(f"SHOW DATABASES LIKE '{DATABASE_NAME}';"))
+    if not result.fetchone():
+        connection.execute(text(f"CREATE DATABASE {DATABASE_NAME};"))
+        print(f"Database '{DATABASE_NAME}' created.")
+
+# Construct the full DATABASE_URL with the database name
+DATABASE_URL = f"{BASE_DATABASE_URL}/{DATABASE_NAME}"
 
 # SQLAlchemy setup
 engine = create_engine(DATABASE_URL)
@@ -26,7 +39,7 @@ class ListingsSample(Base):
     __tablename__ = "listings_sample"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    listing_id = Column(String(255), nullable=False)
+    listing_id = Column(String(255), nullable=False, unique=True)
     title = Column(String(255), nullable=False)
     address = Column(String(255), nullable=False)
     url = Column(Text, nullable=False)
