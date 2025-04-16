@@ -4,10 +4,7 @@ from database import Session, ListingsSample
 session = Session()
 
 # Fetch all listings
-ListingsSample.test_listing()
-listings = ListingsSample.fetch_all(session)
-for listing in listings:
-    print(f"Title: {listing.title}, Price: {listing.selling_price}, Type: {listing.property_type}")
-
+# ListingsSample.test_listing()
+ListingsSample.fetch_all(session)
 # Close the session
 session.close()

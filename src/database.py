@@ -136,48 +136,66 @@ class ListingsSample(Base):
 
     @staticmethod
     def fetch_all(session):
+        print("= Fetching All Listings:")
+
         try:
             listings = session.query(ListingsSample).all()
+            for listing in listings:
+                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Type: {listing.property_type}")
+            print("")
             return listings
         except Exception as e:
-            print(f"Error fetching data: {e}")
+            print(f"> Error: Fetching All Data: {e}\n")
             return []
 
     @staticmethod
     def fetch_by_id(session, listing_id):
+        print(f"= Fetching Listing by ID: {listing_id}")
+
         try:
             listing = session.query(ListingsSample).filter_by(id=listing_id).first()
+            if listing:
+                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Type: {listing.property_type}")
+            else:
+                print(f"> No listing found with ID: {listing_id}")
+            print("")
             return listing
         except Exception as e:
-            print(f"Error fetching data by ID: {e}")
+            print(f"> Error: Fetching Data by ID: {e}\n")
             return None
 
     @classmethod
     def add_listing(cls, session, **kwargs):
+        print(f"= Adding New Listing: {kwargs.get('title', 'Unknown')}")
+
         try:
             new_listing = cls(**kwargs)
             session.add(new_listing)
             session.commit()
-            print("New listing added successfully!")
+            print(f"> Listing Added Successfully | Listing ID: {new_listing.listing_id}")
+            print("")
         except IntegrityError as e:
             session.rollback()
-            print(f"Error: Could not add listing. Reason: {e.orig}")
+            print(f"> Error: Could Not Add Listing. Reason: {e.orig}\n")
         finally:
             session.close()
 
     @classmethod
     def delete_listing(cls, session, listing_id):
+        print(f"= Deleting Listing with ID: {listing_id}")
+
         try:
             listing = session.query(cls).filter_by(listing_id=listing_id).first()
             if listing:
                 session.delete(listing)
                 session.commit()
-                print(f"Listing with listing_id {listing_id} deleted successfully!")
+                print(f"> Listing with listing_id {listing_id} deleted successfully!")
             else:
-                print(f"No listing found with listing_id {listing_id}.")
+                print(f"> No listing found with listing_id {listing_id}.")
+            print("")
         except Exception as e:
             session.rollback()
-            print(f"Error: Could not delete listing. Reason: {e}")
+            print(f"> Error: Could Not Delete Listing. Reason: {e}\n")
         finally:
             session.close()
 
@@ -190,9 +208,10 @@ class ListingsSample(Base):
             # Generate a random 8-digit listing_id
             random_listing_id = f"{random.randint(10000000, 99999999)}"
 
-            # Add a new listing for testing
-            new_listing = cls(
-                listing_id=random_listing_id,  # Unique identifier
+            # Use the add_listing class method to add a new listing
+            cls.add_listing(
+                session,
+                listing_id=random_listing_id,  # Random 8-digit identifier
                 title="Luxury Condo",
                 address="123 Main Street",
                 url="https://example.com/listing",
@@ -206,15 +225,9 @@ class ListingsSample(Base):
                 bathroom_count=2,
                 floor_size_sqft=1000
             )
-            session.add(new_listing)
-            session.commit()
-            print(f"Test listing added successfully with listing_id: {random_listing_id}")
 
-            # Fetch the ID of the newly added listing
-            test_listing_id = new_listing.listing_id
-
-            # Delete the test listing
-            cls.delete_listing(session, listing_id=test_listing_id)
+            # Delete the test listing using the random listing_id
+            cls.delete_listing(session, listing_id=random_listing_id)
 
         except Exception as e:
             session.rollback()
