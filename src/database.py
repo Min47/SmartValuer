@@ -1,9 +1,12 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
+from datetime import date
 from dotenv import dotenv_values
 import os
+import random
 
 # Load properties from .env file
 env = dotenv_values(".env")
@@ -73,9 +76,66 @@ class ListingsSample(Base):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        # Run validation checks
+        self.validate()
+
+    def __repr__(self):
+        return f"<Listing(id={self.id}, title={self.title}, address={self.address}, listed_date={self.listed_date})>"
+    
+    def validate(self):
+        if not self.listing_id:
+            raise ValueError("listing_id cannot be empty.")
+        if not self.title:
+            raise ValueError("title cannot be empty.")
+        if not self.address:
+            raise ValueError("address cannot be empty.")
+        if not self.url:
+            raise ValueError("url cannot be empty.")
+        if not self.listed_date:
+            raise ValueError("listed_date cannot be empty.")
+        if not self.agent_name:
+            raise ValueError("agent_name cannot be empty.")
+        if not self.property_type:
+            raise ValueError("property_type cannot be empty.")
+        if not self.listing_type:
+            raise ValueError("listing_type cannot be empty.")
+        if not self.unit_type:
+            raise ValueError("unit_type cannot be empty.")
+        if self.selling_price is not None and self.selling_price < 0:
+            raise ValueError("selling_price cannot be negative.")
+        if self.rent_per_month is not None and self.rent_per_month < 0:
+            raise ValueError("rent_per_month cannot be negative.")
+        if self.floor_size_sqft is not None and self.floor_size_sqft < 0:
+            raise ValueError("floor_size_sqft cannot be negative.")
+        if self.land_size_sqft is not None and self.land_size_sqft < 0:
+            raise ValueError("land_size_sqft cannot be negative.")
+        if self.bedroom_count is not None and self.bedroom_count < 0:
+            raise ValueError("bedroom_count cannot be negative.")
+        if self.bathroom_count is not None and self.bathroom_count < 0:
+            raise ValueError("bathroom_count cannot be negative.")
+        if self.psf_floor is not None and self.psf_floor < 0:
+            raise ValueError("psf_floor cannot be negative.")
+        if self.psf_land is not None and self.psf_land < 0:
+            raise ValueError("psf_land cannot be negative.")
+        if self.project_year is not None and self.project_year < 0:
+            raise ValueError("project_year cannot be negative.")
+        if self.distance_to_closest_MRT is not None and self.distance_to_closest_MRT < 0:
+            raise ValueError("distance_to_closest_MRT cannot be negative.")
+        if self.created_at is not None and not isinstance(self.created_at, date):
+            raise ValueError("created_at must be a date object.")
+        if self.availability is not None and not isinstance(self.availability, str):
+            raise ValueError("availability must be a string.")
+        if self.description is not None and not isinstance(self.description, str):
+            raise ValueError("description must be a string.")
+        if self.is_verified_listing is not None and not isinstance(self.is_verified_listing, bool):
+            raise ValueError("is_verified_listing must be a boolean.")
+        if self.is_everyone_welcomed is not None and not isinstance(self.is_everyone_welcomed, bool):
+            raise ValueError("is_everyone_welcomed must be a boolean.")
+        if self.property_type_text is not None and not isinstance(self.property_type_text, str):
+            raise ValueError("property_type_text must be a string.")
+
     @staticmethod
     def fetch_all(session):
-        """Fetch all rows from the listings_sample table."""
         try:
             listings = session.query(ListingsSample).all()
             return listings
@@ -85,7 +145,6 @@ class ListingsSample(Base):
 
     @staticmethod
     def fetch_by_id(session, listing_id):
-        """Fetch a single row by ID."""
         try:
             listing = session.query(ListingsSample).filter_by(id=listing_id).first()
             return listing
@@ -93,12 +152,76 @@ class ListingsSample(Base):
             print(f"Error fetching data by ID: {e}")
             return None
 
-# Add more classes for other tables if needed
-# Example:
-# class AnotherTable(Base):
-#     __tablename__ = "another_table"
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     ...
+    @classmethod
+    def add_listing(cls, session, **kwargs):
+        try:
+            new_listing = cls(**kwargs)
+            session.add(new_listing)
+            session.commit()
+            print("New listing added successfully!")
+        except IntegrityError as e:
+            session.rollback()
+            print(f"Error: Could not add listing. Reason: {e.orig}")
+        finally:
+            session.close()
+
+    @classmethod
+    def delete_listing(cls, session, listing_id):
+        try:
+            listing = session.query(cls).filter_by(listing_id=listing_id).first()
+            if listing:
+                session.delete(listing)
+                session.commit()
+                print(f"Listing with listing_id {listing_id} deleted successfully!")
+            else:
+                print(f"No listing found with listing_id {listing_id}.")
+        except Exception as e:
+            session.rollback()
+            print(f"Error: Could not delete listing. Reason: {e}")
+        finally:
+            session.close()
+
+    @classmethod
+    def test_listing(cls):
+        # Create a session
+        session = Session()
+
+        try:
+            # Generate a random 8-digit listing_id
+            random_listing_id = f"{random.randint(10000000, 99999999)}"
+
+            # Add a new listing for testing
+            new_listing = cls(
+                listing_id=random_listing_id,  # Unique identifier
+                title="Luxury Condo",
+                address="123 Main Street",
+                url="https://example.com/listing",
+                listed_date=date.today(),
+                agent_name="John Doe",
+                property_type="condo",
+                listing_type="buy",
+                unit_type="studio",
+                selling_price=1200000.00,
+                bedroom_count=2,
+                bathroom_count=2,
+                floor_size_sqft=1000
+            )
+            session.add(new_listing)
+            session.commit()
+            print(f"Test listing added successfully with listing_id: {random_listing_id}")
+
+            # Fetch the ID of the newly added listing
+            test_listing_id = new_listing.listing_id
+
+            # Delete the test listing
+            cls.delete_listing(session, listing_id=test_listing_id)
+
+        except Exception as e:
+            session.rollback()
+            print(f"Error during test_listing: {e}")
+        finally:
+            # Close the session
+            session.close()
 
 # Create the tables if they don't exist
 Base.metadata.create_all(engine)
