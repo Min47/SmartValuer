@@ -46,7 +46,7 @@ DROP TABLE listings_sample
 	
 INSERT
 	INTO
-	listings_sample (id,
+	listings_sample (
 	listing_id,
 	title,
 	address,
@@ -76,7 +76,7 @@ INSERT
 	land_size_sqft,
 	psf_floor,
 	psf_land)
-VALUES ('1',
+VALUES (
 'ID000001',
 'Sample Property 1',
 '58 Example Street',
