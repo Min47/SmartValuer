@@ -42,4 +42,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create logs folder
 RUN mkdir -p /app/logs
 
-CMD ["python", "src/scraper.py"]
+CMD ["python", "src/main.py"]
