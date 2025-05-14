@@ -12,7 +12,7 @@ class PropertyGuruInitialScraper:
         :param output_file: The file path to save the scraped data.
         """
         try:
-            scraper = ScraperUtils(mode=mode, headless=True)
+            scraper = ScraperUtils(mode=mode, headless=False)
             scraper.scrape(max_pages=max_pages)
             scraper.save_to_csv(filename=output_file)
         except Exception as e:
