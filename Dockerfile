@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,21 +11,27 @@ RUN apt-get update && apt-get install -y \
 
 # Install Google Chrome
 # https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable
-RUN wget http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_135.0.7049.84-1_amd64.deb && \
-    apt-get install -y ./google-chrome-stable_135.0.7049.84-1_amd64.deb && \
+RUN wget http://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_135.0.7049.114-1_amd64.deb && \
+    apt-get install -y ./google-chrome-stable_135.0.7049.114-1_amd64.deb && \
     apt-mark hold google-chrome-stable && \
-    rm -f /app/google-chrome-stable_135.0.7049.84-1_amd64.deb
+    rm -f /app/google-chrome-stable_135.0.7049.114-1_amd64.deb
 
 # Install ChromeDriver
 # https://googlechromelabs.github.io/chrome-for-testing/
-RUN CHROME_DRIVER_VERSION="135.0.7049.84" && \
-    wget https://storage.googleapis.com/chrome-for-testing-public/135.0.7049.84/linux64/chromedriver-linux64.zip && \
-    unzip chromedriver-linux64.zip -d /usr/local/bin && \
-    chmod +x /usr/local/bin/chromedriver-linux64/chromedriver && \
-    rm -f /app/chromedriver_linux64.zip
+RUN wget https://storage.googleapis.com/chrome-for-testing-public/135.0.7049.114/linux64/chromedriver-linux64.zip && \
+    unzip chromedriver-linux64.zip && \
+    chmod +x chromedriver-linux64/chromedriver && \
+    mv chromedriver-linux64/chromedriver /usr/local/bin/ && \
+    rm -rf chromedriver-linux64 chromedriver-linux64.zip
 
 # Set display (not really needed in headless, but some libs expect it)
 ENV DISPLAY=:99
+
+# Set ChromeDriver version to prevent automatic downloads
+ENV CHROMEDRIVER_VERSION=135.0.7049.114
+
+# Disable automatic ChromeDriver downloads
+ENV SB_NO_DRIVER_DOWNLOAD=1
 
 # Set workdir
 WORKDIR /app
@@ -37,9 +43,7 @@ ENV TZ=Asia/Kuala_Lumpur
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# COPY src/ ./src
-
-# Create logs folder
-RUN mkdir -p /app/logs
+# Copy the rest of the application
+COPY . .
 
 CMD ["python", "src/main.py"]
