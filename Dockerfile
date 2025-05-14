@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     libnss3 libxss1 libasound2 libx11-xcb1 libxcomposite1 libxdamage1 \
     libxi6 libxtst6 libglib2.0-0 libu2f-udev libvulkan1 libxrandr2 \
     libwayland-client0 libwayland-cursor0 libwayland-egl1 \
-    fonts-liberation libappindicator3-1 xdg-utils \
+    fonts-liberation libappindicator3-1 xdg-utils xvfb \
+    python3-tk python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
@@ -46,4 +47,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-CMD ["python", "src/main.py"]
+# Run the application
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1920x1080x24 & python src/main.py"]
