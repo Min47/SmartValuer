@@ -2,11 +2,18 @@
 from scraper.scraper_utils import ScraperUtils
 
 class PropertyGuruInitialScraper:
-    def main():
-        # modes = ['buy', 'rent']
-        modes = ['rent']  # For initial testing, only scrape rent mode
-        for mode in modes:
+    @staticmethod
+    def run_scraper(mode="rent", max_pages=None, output_file="data/listings.csv"):
+        """
+        Run the scraper for the specified mode and save the results to a CSV file.
+
+        :param mode: The mode to scrape ("rent" or "buy").
+        :param max_pages: The maximum number of pages to scrape (None for all pages).
+        :param output_file: The file path to save the scraped data.
+        """
+        try:
             scraper = ScraperUtils(mode=mode, headless=True)
-            scraper.scrape(max_pages=1)  # Remove max_pages for full scrape
-            scraper.save_to_csv(filename=f"data/listings_{mode}.csv")
-            scraper.close()
+            scraper.scrape(max_pages=max_pages)
+            scraper.save_to_csv(filename=output_file)
+        except Exception as e:
+            print(f"❌ Error during scraping: {e}")
