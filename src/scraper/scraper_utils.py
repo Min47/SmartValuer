@@ -13,7 +13,7 @@ class ScraperUtils:
     def scrape(self, max_pages=None):
         print(f"Starting scrape for mode: {self.mode}")
         page = 1
-        with SB(headless=self.headless) as sb:  # Use SB() context manager
+        with SB(headless=self.headless, uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:  # Use SB() context manager
             while True:
                 try:
                     if self.mode == "rent":
@@ -21,11 +21,11 @@ class ScraperUtils:
                     elif self.mode == "buy":
                         url = f"{self.base_url}/property-for-sale?listingType=sale&page={page}&isCommercial=false&sort=date&order=desc"
                     print(f"Scraping page {page}: {url}")
-                    sb.open(url)
 
-                    # Solve captcha if necessary
-                    # self.solve_captcha(sb)
-                    # time.sleep(2)
+                    # Solve captcha
+                    sb.activate_cdp_mode(url)
+                    sb.uc_gui_click_captcha()
+                    sb.sleep(2)
 
                     # Save the HTML content to a file for debugging (optional)
                     with open(f"page_{page}.html", "w", encoding="utf-8") as f:
