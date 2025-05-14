@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     try:
         # Fetch all listings from the database
-        print("= Fetching All Listings:")
+        # print("= Fetching All Listings:")
         ListingsSample.fetch_all(session)
 
         # Run the initial full scrape for "rent" mode
