@@ -1,5 +1,6 @@
 from database import Session, ListingsSample
-from scraper.initial_full_scrape import PropertyGuruInitialScraper, PropertyGuruIncrementalScraper
+from scraper.initial_full_scrape import PropertyGuruInitialScraper
+from scraper.incremental_scraper import PropertyGuruIncrementalScraper
 
 if __name__ == '__main__':
     # Create a session
