@@ -12,17 +12,17 @@ if __name__ == '__main__':
         ListingsSample.fetch_all(session)
 
         # Run the initial full scrape for "rent" mode
-        print("\n= Starting Initial Full Scrape:")
+        print("= Starting Initial Full Scrape:")
         PropertyGuruInitialScraper.run_scraper(
             mode="rent",
-            max_pages=1,  # Adjust max_pages for production as needed
+            desired_pages=1,  # Adjust desired_pages for production as needed
             output_file="data/listings_rent.csv"
         )
 
         # # Run the initial full scrape for "buy" mode (optional)
         # PropertyGuruInitialScraper.run_scraper(
         #     mode="buy",
-        #     max_pages=1,
+        #     desired_pages=1,
         #     output_file="data/listings_buy.csv"
         # )
         print("")
