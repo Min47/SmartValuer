@@ -1,3 +1,4 @@
 *.pyc
 *.html
 data/
+downloaded_files/
