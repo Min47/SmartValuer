@@ -1,4 +1,4 @@
-# src/initial_full_scrape.py
+# src/scraper/initial_full_scrape.py
 from scraper.scraper_utils import ScraperUtils
 
 class PropertyGuruInitialScraper:
