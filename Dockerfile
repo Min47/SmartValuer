@@ -25,7 +25,7 @@ RUN wget https://storage.googleapis.com/chrome-for-testing-public/135.0.7049.114
     mv chromedriver-linux64/chromedriver /usr/local/bin/ && \
     rm -rf chromedriver-linux64 chromedriver-linux64.zip
 
-# Set display (not really needed in headless, but some libs expect it)
+# Set display
 ENV DISPLAY=:99
 
 # Set ChromeDriver version to prevent automatic downloads

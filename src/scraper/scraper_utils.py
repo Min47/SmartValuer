@@ -4,16 +4,15 @@ import csv
 import os
 
 class ScraperUtils:
-    def __init__(self, base_url="https://www.propertyguru.com.sg", mode="rent", headless=True):
+    def __init__(self, base_url="https://www.propertyguru.com.sg", mode="rent"):
         self.base_url = base_url
         self.mode = mode
-        self.headless = headless
         self.listings = []
 
     def scrape(self, max_pages=None):
         print(f"Starting scrape for mode: {self.mode}")
         page = 1
-        with SB(headless=self.headless, uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:  # Use SB() context manager
+        with SB(uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:  # Use SB() context manager
             while True:
                 try:
                     if self.mode == "rent":
@@ -64,27 +63,3 @@ class ScraperUtils:
             writer.writeheader()
             writer.writerows(self.listings)
         print(f"✅ Saved {len(self.listings)} listings to {filename}")
-
-    # def solve_captcha(self):
-    #     try:
-    #         send_url = "http://10.18.169.127:3000/cf-clearance-scraper"
-    #         current_url = self.get_current_url()
-    #         print(f"Solving captcha for URL: {current_url}")
-
-    #         body = {"url": current_url, "mode": "waf-session"}
-    #         response = requests.post(send_url, json=body)
-    #         response_data = response.json()
-
-    #         cfUA = response_data['headers']['user-agent']
-    #         cookies = response_data['cookies']
-
-    #         self.quit()
-    #         self.start(headless=self.headless, user_agent=cfUA)
-    #         self.open(current_url)
-    #         time.sleep(2)
-    #         for cookie in cookies:
-    #             self.add_cookie({"name": cookie['name'], "value": cookie['value']})
-    #         self.refresh()
-    #         time.sleep(5)
-    #     except Exception as e:
-    #         print(f"❌ Error solving captcha: {e}")
