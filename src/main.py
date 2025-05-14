@@ -25,6 +25,7 @@ if __name__ == '__main__':
         #     max_pages=1,
         #     output_file="data/listings_buy.csv"
         # )
+        print("")
     except Exception as e:
         print(f"❌ An error occurred: {e}")
     finally:
