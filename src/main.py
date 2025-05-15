@@ -16,7 +16,6 @@ if __name__ == '__main__':
         PropertyGuruInitialScraper.run_scraper(
             mode="rent",
             desired_pages=1,  # Adjust desired_pages for production as needed
-            output_file="data/listings_rent.csv"
         )
 
         # # Run the initial full scrape for "buy" mode (optional)

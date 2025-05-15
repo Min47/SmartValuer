@@ -4,8 +4,7 @@ import csv
 import os
 
 class ScraperUtils:
-    def __init__(self, base_url="https://www.propertyguru.com.sg", mode="rent"):
-        self.base_url = base_url
+    def __init__(self, mode="rent"):
         self.mode = mode
         self.listings = []
 
@@ -27,9 +26,9 @@ class ScraperUtils:
                     
                     # Construct the URL based on the mode
                     if self.mode == "rent":
-                        url = f"{self.base_url}/property-for-rent?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
+                        url = f"https://www.propertyguru.com.sg/property-for-rent?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
                     elif self.mode == "buy":
-                        url = f"{self.base_url}/property-for-sale?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
+                        url = f"https://www.propertyguru.com.sg/property-for-sale?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
                     print(f"Scraping cur_page {cur_page}: {url}")
 
                     # Solve captcha
