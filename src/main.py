@@ -18,19 +18,14 @@ if __name__ == '__main__':
         print("| Initial Full Scrape |")
         print("-----------------------")
 
-        # Run the initial full scrape for "rent" mode
+        # Run the initial full scrape
+        # Temporarily set to "Rent" mode and "Room" unit type for testing
         PropertyGuruInitialScraper.run_scraper(
-            mode = "rent",
+            mode = "Rent", # ["Buy", "Rent"]
+            unit_type = -1, # [-1 for 'Room', 0 for 'Studio', 1 for '1 Bedroom', 2 for '2 Bedroom', 3 for '3 Bedroom', 4 for '4 Bedroom', 5 for '5+ Bedroom']
             desired_pages = 2,
             session = session,
         )
-
-        # # Run the initial full scrape for "buy" mode (optional)
-        # PropertyGuruInitialScraper.run_scraper(
-        #     mode="buy",
-        #     desired_pages=1,
-        #     output_file="data/listings_buy.csv"
-        # )
 
     except Exception as e:
         print(f"❌ Error on Main: {e}")
