@@ -22,6 +22,7 @@ if __name__ == '__main__':
         PropertyGuruInitialScraper.run_scraper(
             mode = "rent",
             desired_pages = 2,
+            session = session,
         )
 
         # # Run the initial full scrape for "buy" mode (optional)
