@@ -3,19 +3,25 @@ from database import Session, ListingsSample
 from scraper.initial_full_scrape import PropertyGuruInitialScraper
 
 if __name__ == '__main__':
-    # Create a database session
-    session = Session()
-
     try:
-        # Fetch all listings from the database
-        # print("= Fetching All Listings:")
+        # Database connection
+        print("-----------------------")
+        print("| Database Connection |")
+        print("-----------------------")
+
+        # Create a database session and fetch all listings
+        session = Session()
         ListingsSample.fetch_all(session)
 
+        # Initial full scrape
+        print("-----------------------")
+        print("| Initial Full Scrape |")
+        print("-----------------------")
+
         # Run the initial full scrape for "rent" mode
-        print("= Starting Initial Full Scrape:")
         PropertyGuruInitialScraper.run_scraper(
-            mode="rent",
-            desired_pages=1,  # Adjust desired_pages for production as needed
+            mode = "rent",
+            desired_pages = 2,
         )
 
         # # Run the initial full scrape for "buy" mode (optional)
@@ -24,9 +30,11 @@ if __name__ == '__main__':
         #     desired_pages=1,
         #     output_file="data/listings_buy.csv"
         # )
-        print("")
+
     except Exception as e:
-        print(f"❌ An error occurred: {e}")
+        print(f"❌ Error on Main: {e}")
     finally:
-        # Close the database session
-        session.close()
+        # Close the database session if it was created
+        if 'session' in locals():
+            session.close()
+        print("")
