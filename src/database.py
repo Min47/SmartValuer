@@ -54,23 +54,22 @@ class ListingsSample(Base):
     is_everyone_welcomed = Column(Boolean, default=None)
     listed_date = Column(Date, nullable=False)
     agent_name = Column(String(255))
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())  # Use func.now() for default timestamp
     property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), nullable=False)
     property_type_text = Column(String(255), default=None)
     ownership_type = Column(Enum("freehold", "leasehold", name="ownership_type_enum"), default=None)
     ownership_type_text = Column(String(255), default=None)
     listing_type = Column(Enum("buy", "rent", name="listing_type_enum"), nullable=False)
+    unit_type = Column(Enum("room", "studio", "house", name="unit_type_enum"), nullable=False)
     selling_price = Column(Float, default=None)
     selling_price_text = Column(String(255), default=None)
-    rent_per_month = Column(Float, default=None)
-    rent_per_month_text = Column(String(255), default=None)
-    unit_type = Column(Enum("room", "studio", "house", name="unit_type_enum"), nullable=False)
     bedroom_count = Column(Integer, default=None)
     bathroom_count = Column(Integer, default=None)
     floor_size_sqft = Column(Integer, default=None)
     land_size_sqft = Column(Integer, default=None)
     psf_floor = Column(Float, default=None)
     psf_land = Column(Float, default=None)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())  # Use func.now() for default timestamp
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())  # Use func.now() for default timestamp
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
