@@ -48,6 +48,7 @@ class ListingsSample(Base):
     url = Column(Text, nullable=False)
     availability = Column(Text, default=None)
     project_year = Column(Integer, default=None)
+    closest_mrt = Column(String(255), default=None)
     distance_to_closest_MRT = Column(Integer, default=None)
     description = Column(Text, default=None)
     is_verified_listing = Column(Boolean, default=None)
