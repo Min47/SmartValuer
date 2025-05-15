@@ -53,7 +53,7 @@ class ListingsSample(Base):
     is_verified_listing = Column(Boolean, default=None)
     is_everyone_welcomed = Column(Boolean, default=None)
     listed_date = Column(Date, nullable=False)
-    agent_name = Column(String(255), nullable=False)
+    agent_name = Column(String(255))
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())  # Use func.now() for default timestamp
     property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), nullable=False)
     property_type_text = Column(String(255), default=None)
@@ -76,8 +76,8 @@ class ListingsSample(Base):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        # Run validation checks
-        self.validate()
+        # # Run validation checks
+        # self.validate()
 
     def __repr__(self):
         return f"<Listing(id={self.id}, title={self.title}, address={self.address}, listed_date={self.listed_date})>"
