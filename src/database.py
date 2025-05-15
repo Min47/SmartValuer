@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text
+from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -6,6 +7,7 @@ from sqlalchemy.sql import func
 from datetime import date
 from dotenv import dotenv_values
 import os
+import pymysql
 import random
 
 # Load properties from .env file
@@ -15,6 +17,28 @@ DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWO
 DATABASE_HOST = os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST"))
 DATABASE_PORT = os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT"))
 DATABASE_NAME = os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME"))
+
+# --- RAW TABLE CREATION (MySQL) FROM SQL FILE ---
+sql_file_path = os.path.join(os.path.dirname(__file__), "..", "sql", "create_table.sql")
+sql_file_path = os.path.abspath(sql_file_path)
+with open(sql_file_path, "r", encoding="utf-8") as f:
+    create_table_sql = f.read()
+
+connection = pymysql.connect(
+    host=DATABASE_HOST,
+    user=DATABASE_USER,
+    password=DATABASE_PASSWORD,
+    database=DATABASE_NAME,
+    port=int(DATABASE_PORT)
+)
+
+# Create a cursor object
+with connection.cursor() as cursor:
+    cursor.execute(create_table_sql)
+
+connection.commit()
+connection.close()
+# --- END RAW TABLE CREATION ---
 
 # Construct the DATABASE_URL without specifying the database name
 BASE_DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}"
@@ -41,34 +65,40 @@ Session = sessionmaker(bind=engine)
 class ListingsSample(Base):
     __tablename__ = "listings_sample"
 
+    # Listings
     id = Column(Integer, primary_key=True, autoincrement=True)
     listing_id = Column(String(255), nullable=False, unique=True)
     title = Column(String(255), nullable=False)
-    address = Column(String(255), nullable=False)
-    url = Column(Text, nullable=False)
+    address = Column(String(255))
+    listing_url = Column(Text, nullable=False)
     availability = Column(Text, default=None)
     project_year = Column(Integer, default=None)
     closest_mrt = Column(String(255), default=None)
-    distance_to_closest_MRT = Column(Integer, default=None)
-    description = Column(Text, default=None)
+    distance_to_closest_mrt = Column(Integer, default=None)
     is_verified_listing = Column(Boolean, default=None)
     is_everyone_welcomed = Column(Boolean, default=None)
-    listed_date = Column(Date, nullable=False)
+    listed_date = Column(Date, default=None)
     agent_name = Column(String(255))
-    property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), nullable=False)
+    agent_rating = Column(Float, default=None)
+    listing_type = Column(Enum("Buy", "Rent", name="listing_type_enum"), nullable=False)
+    unit_type = Column(Enum("Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom", name="unit_type_enum"), nullable=False)
+    selling_price = Column(Float, default=None)
+    selling_price_text = Column(String(255), default=None)
+
+    # Property Details
+    description = Column(Text, default=None)
+    property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), default=None)
     property_type_text = Column(String(255), default=None)
     ownership_type = Column(Enum("freehold", "leasehold", name="ownership_type_enum"), default=None)
     ownership_type_text = Column(String(255), default=None)
-    listing_type = Column(Enum("buy", "rent", name="listing_type_enum"), nullable=False)
-    unit_type = Column(Enum("room", "studio", "house", name="unit_type_enum"), nullable=False)
-    selling_price = Column(Float, default=None)
-    selling_price_text = Column(String(255), default=None)
     bedroom_count = Column(Integer, default=None)
     bathroom_count = Column(Integer, default=None)
     floor_size_sqft = Column(Integer, default=None)
     land_size_sqft = Column(Integer, default=None)
     psf_floor = Column(Float, default=None)
     psf_land = Column(Float, default=None)
+
+    # Datetime
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())  # Use func.now() for default timestamp
     updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())  # Use func.now() for default timestamp
 
@@ -80,19 +110,15 @@ class ListingsSample(Base):
         # self.validate()
 
     def __repr__(self):
-        return f"<Listing(id={self.id}, title={self.title}, address={self.address}, listed_date={self.listed_date})>"
+        return f"<Listing(id={self.id}, title={self.title}, address={self.address}>"
     
     def validate(self):
         if not self.listing_id:
             raise ValueError("listing_id cannot be empty.")
         if not self.title:
             raise ValueError("title cannot be empty.")
-        if not self.address:
-            raise ValueError("address cannot be empty.")
-        if not self.url:
-            raise ValueError("url cannot be empty.")
-        if not self.listed_date:
-            raise ValueError("listed_date cannot be empty.")
+        if not self.listing_url:
+            raise ValueError("listing_url cannot be empty.")
         if not self.agent_name:
             raise ValueError("agent_name cannot be empty.")
         if not self.property_type:
@@ -101,10 +127,10 @@ class ListingsSample(Base):
             raise ValueError("listing_type cannot be empty.")
         if not self.unit_type:
             raise ValueError("unit_type cannot be empty.")
+        if self.agent_rating is not None and (self.agent_rating < 0 or self.agent_rating > 5):
+            raise ValueError("agent_rating must be between 0 and 5.")
         if self.selling_price is not None and self.selling_price < 0:
             raise ValueError("selling_price cannot be negative.")
-        if self.rent_per_month is not None and self.rent_per_month < 0:
-            raise ValueError("rent_per_month cannot be negative.")
         if self.floor_size_sqft is not None and self.floor_size_sqft < 0:
             raise ValueError("floor_size_sqft cannot be negative.")
         if self.land_size_sqft is not None and self.land_size_sqft < 0:
@@ -119,20 +145,16 @@ class ListingsSample(Base):
             raise ValueError("psf_land cannot be negative.")
         if self.project_year is not None and self.project_year < 0:
             raise ValueError("project_year cannot be negative.")
-        if self.distance_to_closest_MRT is not None and self.distance_to_closest_MRT < 0:
-            raise ValueError("distance_to_closest_MRT cannot be negative.")
+        if self.distance_to_closest_mrt is not None and self.distance_to_closest_mrt < 0:
+            raise ValueError("distance_to_closest_mrt cannot be negative.")
         if self.created_at is not None and not isinstance(self.created_at, date):
             raise ValueError("created_at must be a date object.")
         if self.availability is not None and not isinstance(self.availability, str):
             raise ValueError("availability must be a string.")
-        if self.description is not None and not isinstance(self.description, str):
-            raise ValueError("description must be a string.")
         if self.is_verified_listing is not None and not isinstance(self.is_verified_listing, bool):
             raise ValueError("is_verified_listing must be a boolean.")
         if self.is_everyone_welcomed is not None and not isinstance(self.is_everyone_welcomed, bool):
             raise ValueError("is_everyone_welcomed must be a boolean.")
-        if self.property_type_text is not None and not isinstance(self.property_type_text, str):
-            raise ValueError("property_type_text must be a string.")
 
     @staticmethod
     def fetch_all(session):
@@ -141,7 +163,7 @@ class ListingsSample(Base):
         try:
             listings = session.query(ListingsSample).all()
             for listing in listings:
-                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Type: {listing.property_type}")
+                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}, Distance_to_Closest_MRT: {listing.distance_to_closest_mrt}")
             print("")
             return listings
         except Exception as e:
@@ -155,7 +177,7 @@ class ListingsSample(Base):
         try:
             listing = session.query(ListingsSample).filter_by(id=listing_id).first()
             if listing:
-                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Type: {listing.property_type}")
+                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}")
             else:
                 print(f"> No listing found with ID: {listing_id}")
             print("")
@@ -165,18 +187,44 @@ class ListingsSample(Base):
             return None
 
     @classmethod
-    def add_listing(cls, session, **kwargs):
-        print(f"= Adding New Listing: {kwargs.get('title', 'Unknown')}")
-
+    def upsert_listing(cls, session, **kwargs):
+        print(f"= Upsert New Listing: {kwargs.get('title', 'Unknown')}")
         try:
-            new_listing = cls(**kwargs)
-            session.add(new_listing)
-            session.commit()
-            print(f"> Listing Added Successfully | Listing ID: {new_listing.listing_id}")
-            print("")
+            # 1. Try to fetch the existing row by unique key
+            existing = session.query(cls).filter_by(listing_id=kwargs.get("listing_id")).first()
+
+            if existing:
+                # 2. Compare each field (skip id, created_at, updated_at)
+                changed = False
+                for col in cls.__table__.columns.keys():
+                    if col in ["id", "created_at", "updated_at"]:
+                        continue
+                    if col in kwargs and getattr(existing, col) != kwargs[col]:
+                        changed = True
+                        break
+
+                if changed:
+                    # 3. Only update if something changed
+                    for col in cls.__table__.columns.keys():
+                        if col in ["id", "created_at", "updated_at"]:
+                            continue
+                        if col in kwargs:
+                            setattr(existing, col, kwargs[col])
+                    existing.updated_at = func.now()
+                    session.commit()
+                    print(f"> Listing Updated | Listing ID: {kwargs.get('listing_id', 'Unknown')}")
+                else:
+                    print("> No changes detected, skipping update.")
+            else:
+                # Insert new row
+                new_listing = cls(**kwargs)
+                session.add(new_listing)
+                session.commit()
+                print(f"> Listing Inserted | Listing ID: {kwargs.get('listing_id', 'Unknown')}")
+
         except IntegrityError as e:
             session.rollback()
-            print(f"> Error: Could Not Add Listing. Reason: {e.orig}\n")
+            print(f"> Error: Could Not Upsert Listing. Reason: {e.orig}\n")
         finally:
             session.close()
 
@@ -208,17 +256,17 @@ class ListingsSample(Base):
             # Generate a random 8-digit listing_id
             random_listing_id = f"{random.randint(10000000, 99999999)}"
 
-            # Use the add_listing class method to add a new listing
-            cls.add_listing(
+            # Use the upsert_listing class method to add a new listing
+            cls.upsert_listing(
                 session,
                 listing_id=random_listing_id,  # Random 8-digit identifier
                 title="Luxury Condo",
                 address="123 Main Street",
-                url="https://example.com/listing",
+                listing_url="https://example.com/listing",
                 listed_date=date.today(),
                 agent_name="John Doe",
                 property_type="condo",
-                listing_type="buy",
+                listing_type="Buy",
                 unit_type="studio",
                 selling_price=1200000.00,
                 bedroom_count=2,
@@ -235,6 +283,3 @@ class ListingsSample(Base):
         finally:
             # Close the session
             session.close()
-
-# Create the tables if they don't exist
-Base.metadata.create_all(engine)
