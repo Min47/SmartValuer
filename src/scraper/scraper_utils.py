@@ -1,5 +1,6 @@
 # src/scraper/scraper_utils.py
-from database import Session, ListingsSample
+from database import ListingsSample
+from datetime import datetime
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
@@ -8,16 +9,19 @@ import os
 import re
 
 class ScraperUtils:
-    def __init__(self, mode="rent"):
+    def __init__(self, mode, unit_type):
         self.mode = mode
+        self.unit_type = unit_type
         self.listings = []
 
-    def scrape(self, desired_pages=None):
+    def scrape_listings(self, desired_pages=None):
         cur_page = 1
         max_pages = 99  # Temporary default value for maximum pages
 
         # Filters
         print(f"= Scraping Mode: {self.mode}")
+        print(f"= Unit Type: {self.unit_type}")
+        print(f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}")
         print("")
 
         # Run the scraper with a context manager
@@ -28,10 +32,10 @@ class ScraperUtils:
                     print(f"= Page {cur_page} =")
                     
                     # Construct the URL based on the filters
-                    if self.mode == "rent":
-                        url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
-                    elif self.mode == "buy":
-                        url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc"
+                    if self.mode == "Rent":
+                        url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                    elif self.mode == "Buy":
+                        url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
                     # Print the URL for debugging
                     print(f"> URL: {url}")
                     
@@ -54,9 +58,9 @@ class ScraperUtils:
                         print(f"> Listings Found: {len(cards)}")
                         print("")
 
-                        # Extract the listing information from the cards
-                        listings_info = ListingsInfo(cards)
-                        self.listings.extend(listings_info.listings)
+                    # Extract the listing information from the cards
+                    listings_info = ListingsInfo(cards, self.mode, self.unit_type)
+                    self.listings.extend(listings_info.listings)
 
                     # # Dynamically determine the maximum number of pages
                     # # Not yet verify the element
@@ -84,10 +88,32 @@ class ScraperUtils:
                     print(f"❌ Error on Page {cur_page}: {e}")
                     break
 
+    def scrape_details(self, session):
+        # Info:
+        # Description
+        # Property Type
+        # Property Type Text
+        # Ownership Type
+        # Ownership Type Text
+        # Bedroom Count
+        # Bathroom Count
+        # Floor Size (sqft)
+        # Land Size (sqft)
+        # PSF Floor
+        # PSF Land
+        pass
+
     def save_to_csv(self, filename="data/listings.csv"):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
+        if not self.listings:
+            print("= No listings to save.")
+            return
+    
+        # Dynamically detect fieldnames from the first listing
+        fieldnames = self.listings[0].keys()
+    
         with open(filename, mode='w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=["card_id", "title", "price", "address"])
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(self.listings)
         print(f"= Saved {len(self.listings)} Listings to {filename}")
@@ -96,56 +122,73 @@ class ScraperUtils:
         # Save the listings to the database
         for listing in self.listings:
             try:
-                ListingsSample.add_listing(
-                    session,
-                    listing_id=listing["card_id"],
-                    title=listing["title"],
-                    address=listing["address"],
-                    rental_price=float(re.sub(r"[^\d.]", "", listing["price"])) if listing["price"] else None, # Need a rule to convert price to float
-                )    
-
+                # Dynamically pass all fields in the listing dictionary
+                ListingsSample.upsert_listing(session, **listing)
             except Exception as e:
                 print(f"❌ Error Saving to DB: {e}")
         print(f"= Saved {len(self.listings)} Listings to Database")
 
 class ListingsInfo:
-    def __init__(self, cards):
+    def __init__(self, cards, mode, unit_type):
+        self.mode = mode
+        self.unit_type = unit_type
         self.listings = []
         self.print_output = True
         self.extract_listings(cards)
 
     def extract_listings(self, cards):
-        # Extract listing information from the cards
+        # List of (field_name, method_name) pairs
+        fields = [
+            # ("outer_html", "get_outer_html"),
+            ("listing_id", "get_listing_id"),
+            ("title", "get_title"),
+            ("address", "get_address"),
+            ("listing_url", "get_listing_url"),
+            ("availability", "get_availability"),
+            ("project_year", "get_project_year"),
+            ("closest_mrt", "get_closest_mrt"),
+            ("distance_to_closest_mrt", "get_distance_to_closest_mrt"),
+            ("is_verified_listing", "get_is_verified_listing"),
+            ("is_everyone_welcomed", "get_is_everyone_welcomed"),
+            ("listed_date", "get_listed_date"),
+            ("agent_name", "get_agent_name"),
+            ("agent_rating", "get_agent_rating"),
+            ("listing_type", "get_listing_type"),
+            ("unit_type", "get_unit_type"),
+            ("selling_price", "get_selling_price"),
+            ("selling_price_text", "get_selling_price_text"),
+        ]
+
         # Iterate through each card and extract the required information
         for card in cards:
             try:
-                # outer_html = self.get_outer_html(card)
-                card_id = self.get_card_id(card)
-                title = self.get_title(card)
-                price = self.get_price(card)
-                address = self.get_address(card)
+                # Listing dictionary to store the extracted information
+                listing = {}
+
+                # # Call the method dynamically
+                for field, method in fields:
+                    if field in ["listing_type", "unit_type"]:
+                        # For listing_type and unit_type, use the class attributes
+                        listing[field] = getattr(self, method)()
+                    else:
+                        # For other fields, call the respective method
+                        listing[field] = getattr(self, method)(card)
 
                 # Print the extracted information for debugging
                 if self.print_output:
-                    # print(f"= Card Outer HTML: {self.get_outer_html(card)}")
-                    print(f"= Card ID: {card_id}")
-                    print(f"> Title: {title}")
-                    print(f"> Price: {price}")
-                    print(f"> Address: {address}")
+                    print("= Card Info:")
+                    for field, method in fields:
+                        # Convert snake_case to Title Case with spaces for display
+                        display_name = field.replace("_", " ").title()
+                        print(f"> {display_name}: {listing[field]}")
                     print("")
 
                 # Add the extracted listing information to the list
-                self.listings.append({
-                    "card_id": card_id,
-                    "title": title,
-                    "price": price,
-                    "address": address
-                })
+                self.listings.append(listing)
             except Exception as e:
                 print(f"❌ Error on Listings Cards Info Extraction: {e}")
 
     def get_outer_html(self, card):
-        # Extract the outer HTML of the card
         try:
             outer_html = card.get_attribute('outerHTML')
         except NoSuchElementException:
@@ -153,18 +196,16 @@ class ListingsInfo:
         finally:
             return outer_html
     
-    def get_card_id(self, card):
-        # Extract the card id
+    def get_listing_id(self, card):
         try:
-            card_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
-            card_id = card_id_element.get_attribute('data-listing-id')
+            listing_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
+            listing_id = listing_id_element.get_attribute('data-listing-id')
         except NoSuchElementException:
-            card_id = None
+            listing_id = None
         finally:
-            return card_id
+            return listing_id
         
     def get_title(self, card):
-        # Extract the title
         try:
             title = card.find_element(By.XPATH, './/h3[@class="listing-title"]').text
         except NoSuchElementException:
@@ -172,20 +213,163 @@ class ListingsInfo:
         finally:
             return title
         
-    def get_price(self, card):
-        # Extract the price
-        try:
-            price = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
-        except NoSuchElementException:
-            price = None
-        finally:
-            return price
-        
     def get_address(self, card):
-        # Extract the address
         try:
             address = card.find_element(By.XPATH, './/div[@class="listing-address"]').text
         except NoSuchElementException:
             address = None
         finally:
             return address
+        
+    def get_listing_url(self, card):
+        try:
+            listing_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
+        except NoSuchElementException:
+            listing_url = None
+        finally:
+            return listing_url
+        
+    def get_availability(self, card):
+        try:
+            availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]').text
+        except NoSuchElementException:
+            availability = None
+        finally:
+            return availability
+        
+    def get_project_year(self, card):
+        try:
+            year_text = card.find_element(By.XPATH, './/span[@da-id="lc-info-badge"]').text
+            # Look for 'Built: xxxx' or 'New Project: xxxx'
+            match = re.search(r'(Built:|New Project:)\s*(\d{4})', year_text)
+            project_year = int(match.group(2).strip()) if match else None
+        except NoSuchElementException:
+            project_year = None
+        finally:
+            return project_year
+        
+    def get_closest_mrt(self, card):
+        try:
+            closest_mrt_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
+            # Check if the text contains 'from'
+            if 'from' in closest_mrt_text:
+                # Extract the MRT station name after 'from'
+                match = re.search(r'from\s+(.+)', closest_mrt_text)
+                closest_mrt = match.group(1).strip() if match else None
+            else:
+                # Take the whole string if 'from' is not present
+                closest_mrt = closest_mrt_text.strip() if closest_mrt_text else None
+        except NoSuchElementException:
+            closest_mrt = None  # Element not found
+        finally:
+            return closest_mrt
+        
+    def get_distance_to_closest_mrt(self, card):
+        try:
+            distance_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
+            # Look for patterns like '(460 m)', '(1.04 km)', or similar, ensuring it's inside brackets
+            match = re.search(r'\(([\d.]+)\s*(km|m)\)', distance_text)
+            if match:
+                distance_value = float(match.group(1).strip())
+                distance_unit = match.group(2).strip()
+                if distance_unit == 'km':
+                    distance_to_closest_mrt = int(distance_value * 1000)  # Convert km to m and cast to int
+                else:
+                    distance_to_closest_mrt = int(distance_value)  # Cast to int
+            else:
+                distance_to_closest_mrt = None  # No valid distance found
+        except NoSuchElementException:
+            distance_to_closest_mrt = None  # Element not found
+        finally:
+            return distance_to_closest_mrt
+        
+    def get_is_verified_listing(self, card):
+        try:
+            verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]')
+            is_verified_listing = True if verified_element else False
+        except NoSuchElementException:
+            is_verified_listing = False
+        finally:
+            return is_verified_listing
+        
+    def get_is_everyone_welcomed(self, card):
+        try:
+            everyone_welcomed_element = card.find_elements(By.XPATH, './/span[@da-id="lc-info-badge"]')
+            # Convert text to lowercase and check if it contains 'everyone welcome'
+            is_everyone_welcomed = any("everyone welcome" in element.text.lower() for element in everyone_welcomed_element)
+        except NoSuchElementException:
+            is_everyone_welcomed = False
+        finally:
+            return is_everyone_welcomed
+    
+    def get_listed_date(self, card):
+        try:
+            listed_date_text = card.find_element(By.XPATH, './/ul[@class="listing-recency"]//span[@class="info-value"]').text
+            # Extract the date part after "Listed on"
+            match = re.search(r'Listed on\s+(\w+\s\d{1,2},\s\d{4})', listed_date_text)
+            if match:
+                # Parse the extracted date string into a datetime object
+                date_str = match.group(1).strip()
+                listed_date = datetime.strptime(date_str, "%B %d, %Y").date()  # Convert to YYYY-MM-DD format
+            else:
+                listed_date = None
+        except NoSuchElementException:
+            listed_date = None
+        finally:
+            return listed_date
+        
+    def get_agent_name(self, card):
+        try:
+            agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]').text
+        except NoSuchElementException:
+            agent_name = None
+        finally:
+            return agent_name
+        
+    def get_agent_rating(self, card):
+        try:
+            agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]').text
+            # Convert rating to float
+            agent_rating = float(agent_rating) if agent_rating else None
+        except NoSuchElementException:
+            agent_rating = None
+        finally:
+            return agent_rating
+        
+    def get_listing_type(self):
+        return self.mode  # Return the mode (Rent or Buy) as the listing type
+    
+    def get_unit_type(self):
+        if self.unit_type == -1:
+            return "Room"
+        elif self.unit_type == 0:
+            return "Studio"
+        elif self.unit_type == 1:
+            return "1 Bedroom"
+        elif self.unit_type == 2:
+            return "2 Bedroom"
+        elif self.unit_type == 3:
+            return "3 Bedroom"
+        elif self.unit_type == 4:
+            return "4 Bedroom"
+        elif self.unit_type == 5:
+            return "5+ Bedroom"
+        
+    def get_selling_price(self, card):
+        try:
+            price = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
+            # Extract the numeric part of the price
+            price_value = re.sub(r"[^\d.]", "", price)
+            selling_price = float(price_value) if price_value else None
+        except NoSuchElementException:
+            selling_price = None
+        finally:
+            return selling_price
+        
+    def get_selling_price_text(self, card):
+        try:
+            selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
+        except NoSuchElementException:
+            selling_price_text = None
+        finally:
+            return selling_price_text
