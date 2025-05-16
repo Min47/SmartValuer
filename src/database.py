@@ -73,11 +73,10 @@ ensure_database_exists()
 SQL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql"))
 create_table_if_not_exists(os.path.join(SQL_DIR, "create_table.sql"))
 
-# --- SQLAlchemy Models ---
+# --- SQLAlchemy Models (One class = One table)---
 class Listings(Base):
     __tablename__ = "listings"
 
-    # Listings
     id = Column(Integer, primary_key=True, autoincrement=True)
     listing_id = Column(String(255), nullable=False, unique=True)
     title = Column(String(255), nullable=False)
@@ -327,3 +326,6 @@ class Listings(Base):
         finally:
             # Close the session
             session.close()
+
+class Agent(Base):
+    pass
