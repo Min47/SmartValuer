@@ -1,17 +1,74 @@
 # src/main.py
-from database import Session, Listings
+from dotenv import dotenv_values
 from scraper.initial_full_scrape import PropertyGuruInitialScraper
 from sqlalchemy import text
+import database
+import os
+import time
 
+# Allowed values
+ALLOWED_MODES = {"Rent", "Buy"}
+ALLOWED_UNIT_TYPES = {-1, 0, 1, 2, 3, 4, 5}
+
+def validate_modes(modes):
+    for mode in modes:
+        if mode not in ALLOWED_MODES:
+            raise ValueError(f"Invalid mode: {mode}. Allowed: {ALLOWED_MODES}")
+
+def validate_unit_types(unit_types):
+    for ut in unit_types:
+        if ut not in ALLOWED_UNIT_TYPES:
+            raise ValueError(f"Invalid unit_type: {ut}. Allowed: {ALLOWED_UNIT_TYPES}")
+
+# Load environment variables
+def get_env():
+    return dotenv_values(".env")
+
+def get_db_config(env):
+    return {
+        "user": os.environ.get("DATABASE_USER", env.get("DATABASE_USER")),
+        "password": os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWORD")),
+        "host": os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST")),
+        "port": os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT")),
+        "name": os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME")),
+    }
+
+def get_modes(env):
+    modes = os.environ.get("MODES", env.get("MODES", ""))
+    return [m.strip() for m in modes.split(",") if m.strip()]
+
+def get_unit_types(env):
+    unit_types = os.environ.get("UNIT_TYPES", env.get("UNIT_TYPES", ""))
+    result = []
+    for u in unit_types.split(","):
+        u = u.strip()
+        result.append(int(u))
+    return result
+
+# Main
 if __name__ == '__main__':
     try:
+        # Load environment variables
+        env = get_env()
+        modes = get_modes(env)
+        unit_types = get_unit_types(env)
+        db_config = get_db_config(env)
+
+        # Validate user input
+        validate_modes(modes)
+        validate_unit_types(unit_types)
+
         # Database connection
         print("┌---------------------┐")
         print("| Database Connection |")
         print("└---------------------┘")
+        print("")
+
+        # Initialize database with env/config
+        database.init_db(db_config)
 
         # Create a new session and test the connection
-        session = Session()
+        session = database.Session()
         session.execute(text("SELECT 1"))
         print(f"> Host: {session.bind.url.host}")
         print(f"> Port: {session.bind.url.port}")
@@ -23,15 +80,25 @@ if __name__ == '__main__':
         print("┌---------------------┐")
         print("| Initial Full Scrape |")
         print("└---------------------┘")
+        print("")
 
-        # Run the initial full scrape
-        # Temporarily set to "Rent" mode and "Room" unit type for testing
-        PropertyGuruInitialScraper.run_scraper(
-            mode = "Rent", # ["Buy", "Rent"]
-            unit_type = -1, # [-1 for 'Room', 0 for 'Studio', 1 for '1 Bedroom', 2 for '2 Bedroom', 3 for '3 Bedroom', 4 for '4 Bedroom', 5 for '5+ Bedroom']
-            desired_pages = 2,
-            session = session,
-        )
+        # Testing purpose
+        modes = ["Rent", "Buy"]
+        unit_types = [-1, 0, 5]
+
+        for mode in modes:
+            for unit_type in unit_types:
+                if mode == "Buy" and unit_type == -1:
+                    continue
+                PropertyGuruInitialScraper.run_scraper(
+                    mode=mode,
+                    unit_type=unit_type,
+                    desired_pages=2,
+                    session=session,
+                )
+
+                print("Sleeping for 30 seconds...")
+                time.sleep(30)  # Sleep for 30 second between different modes and unit types
 
     except Exception as e:
         print(f"❌ Error on Main: {e}")

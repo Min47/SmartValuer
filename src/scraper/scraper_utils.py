@@ -210,6 +210,7 @@ class ListingsInfo:
                 self.cur_page_listings.append(listing)
             except Exception as e:
                 print(f"❌ Error on Listings Cards Info Extraction: {e}")
+                print("")
 
     def get_outer_html(self, card):
         try:

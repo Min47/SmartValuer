@@ -1,64 +1,81 @@
+from datetime import date
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text
-from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
-from datetime import date
-from dotenv import dotenv_values
 import os
 import pymysql
 import random
 
-# --- Configuration ---
-def load_db_config():
-    env = dotenv_values(".env")
-    return {
-        "user": os.environ.get("DATABASE_USER", env.get("DATABASE_USER")),
-        "password": os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWORD")),
-        "host": os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST")),
-        "port": os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT")),
-        "name": os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME")),
-    }
-
-DB_CONFIG = load_db_config()
-
 # --- SQLAlchemy setup ---
-BASE_DATABASE_URL = (
-    f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@"
-    f"{DB_CONFIG['host']}:{DB_CONFIG['port']}"
-)
-DATABASE_URL = f"{BASE_DATABASE_URL}/{DB_CONFIG['name']}"
-
 Base = declarative_base()
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
+Session = None
+engine = None
+
+def init_db(db_config):
+    """
+    Initialize the SQLAlchemy engine and session, ensure DB and tables exist.
+    Call this ONCE at app startup, passing in a config dict.
+    """
+
+    # Global variables
+    global engine, Session
+
+    # Create the engine and session
+    BASE_DATABASE_URL = (
+        f"mysql+pymysql://{db_config['user']}:{db_config['password']}@"
+        f"{db_config['host']}:{db_config['port']}"
+    )
+    DATABASE_URL = f"{BASE_DATABASE_URL}/{db_config['name']}"
+    engine = create_engine(DATABASE_URL)
+    Session = sessionmaker(bind=engine)
+
+    # Create the database and tables if they do not exist
+    ensure_database_exists(db_config)
+    sql_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql"))
+    create_table_if_not_exists(os.path.join(sql_dir, "create_table.sql"), db_config)
 
 # --- Database and Table Creation ---
-def ensure_database_exists():
-    """Create the database if it does not exist."""
-    base_engine = create_engine(BASE_DATABASE_URL)
+def ensure_database_exists(db_config):
+    """
+    Create the database if it does not exist.
+    """
+    base_engine = create_engine(
+        f"mysql+pymysql://{db_config['user']}:{db_config['password']}@"
+        f"{db_config['host']}:{db_config['port']}"
+    )
     with base_engine.connect() as connection:
-        result = connection.execute(text(f"SHOW DATABASES LIKE '{DB_CONFIG['name']}';"))
+        result = connection.execute(text(f"SHOW DATABASES LIKE '{db_config['name']}';"))
         if not result.fetchone():
-            connection.execute(text(f"CREATE DATABASE {DB_CONFIG['name']};"))
-            print(f"> Database '{DB_CONFIG['name']}' created.")
+            connection.execute(text(f"CREATE DATABASE {db_config['name']};"))
+            print(f"> Database '{db_config['name']}' created.")
 
-def create_table_if_not_exists(sql_file_path):
-    """Create a table using the SQL in the given file if it does not exist."""
+def create_table_if_not_exists(sql_file_path, db_config):
+    """
+    Create a table using the SQL in the given file if it does not exist.
+    """
+
+    # Check if the SQL file exists
     sql_file_path = os.path.abspath(sql_file_path)
     if not os.path.exists(sql_file_path):
         print(f"> SQL file not found: {sql_file_path}")
         return
+    
+    # Read the SQL file
     with open(sql_file_path, "r", encoding="utf-8") as f:
         create_table_sql = f.read()
+
+    # Connect to the database
     connection = pymysql.connect(
-        host=DB_CONFIG['host'],
-        user=DB_CONFIG['user'],
-        password=DB_CONFIG['password'],
-        database=DB_CONFIG['name'],
-        port=int(DB_CONFIG['port'])
+        host=db_config['host'],
+        user=db_config['user'],
+        password=db_config['password'],
+        database=db_config['name'],
+        port=int(db_config['port'])
     )
+
+    # Execute the SQL to create the table
     try:
         with connection.cursor() as cursor:
             cursor.execute(create_table_sql)
@@ -67,11 +84,6 @@ def create_table_if_not_exists(sql_file_path):
         print(f"> Error creating table: {e}")
     finally:
         connection.close()
-
-# --- Ensure DB and Table(s) exist ---
-ensure_database_exists()
-SQL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql"))
-create_table_if_not_exists(os.path.join(SQL_DIR, "create_table.sql"))
 
 # --- SQLAlchemy Models (One class = One table)---
 class Listings(Base):
@@ -326,6 +338,3 @@ class Listings(Base):
         finally:
             # Close the session
             session.close()
-
-class Agent(Base):
-    pass
