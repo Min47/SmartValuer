@@ -1,5 +1,5 @@
 # src/main.py
-from database import Session, ListingsSample
+from database import Session, Listings
 from scraper.initial_full_scrape import PropertyGuruInitialScraper
 from sqlalchemy import text
 

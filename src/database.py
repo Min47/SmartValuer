@@ -61,9 +61,9 @@ engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
-# Define the ListingsSample table
-class ListingsSample(Base):
-    __tablename__ = "listings_sample"
+# Define the Listings table
+class Listings(Base):
+    __tablename__ = "listings"
 
     # Listings
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -161,7 +161,7 @@ class ListingsSample(Base):
         print("= Fetching All Listings:")
 
         try:
-            listings = session.query(ListingsSample).all()
+            listings = session.query(Listings).all()
             for listing in listings:
                 print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}, Distance_to_Closest_MRT: {listing.distance_to_closest_mrt}")
             print("")
@@ -175,7 +175,7 @@ class ListingsSample(Base):
         print(f"= Fetching Listing by ID: {listing_id}")
 
         try:
-            listing = session.query(ListingsSample).filter_by(id=listing_id).first()
+            listing = session.query(Listings).filter_by(id=listing_id).first()
             if listing:
                 print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}")
             else:

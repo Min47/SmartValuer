@@ -1,5 +1,5 @@
 # src/scraper/scraper_utils.py
-from database import ListingsSample
+from database import Listings
 from datetime import datetime
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
@@ -129,7 +129,7 @@ class ScraperUtils:
     def save_to_db(self, session):
         # Save the listings to the database
         try:
-            ListingsSample.batch_upsert_listings(session, self.cur_page_listings)
+            Listings.batch_upsert_listings(session, self.cur_page_listings)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
