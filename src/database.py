@@ -18,28 +18,6 @@ DATABASE_HOST = os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST"))
 DATABASE_PORT = os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT"))
 DATABASE_NAME = os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME"))
 
-# --- RAW TABLE CREATION (MySQL) FROM SQL FILE ---
-sql_file_path = os.path.join(os.path.dirname(__file__), "..", "sql", "create_table.sql")
-sql_file_path = os.path.abspath(sql_file_path)
-with open(sql_file_path, "r", encoding="utf-8") as f:
-    create_table_sql = f.read()
-
-connection = pymysql.connect(
-    host=DATABASE_HOST,
-    user=DATABASE_USER,
-    password=DATABASE_PASSWORD,
-    database=DATABASE_NAME,
-    port=int(DATABASE_PORT)
-)
-
-# Create a cursor object
-with connection.cursor() as cursor:
-    cursor.execute(create_table_sql)
-
-connection.commit()
-connection.close()
-# --- END RAW TABLE CREATION ---
-
 # Construct the DATABASE_URL without specifying the database name
 BASE_DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}"
 
@@ -60,6 +38,29 @@ DATABASE_URL = f"{BASE_DATABASE_URL}/{DATABASE_NAME}"
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
+
+# Create the table if it doesn't exist
+def create_table_if_not_exists(sql_file_path):
+    sql_file_path = os.path.abspath(sql_file_path)
+    with open(sql_file_path, "r", encoding="utf-8") as f:
+        create_table_sql = f.read()
+
+    connection = pymysql.connect(
+        host=DATABASE_HOST,
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+        database=DATABASE_NAME,
+        port=int(DATABASE_PORT)
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(create_table_sql)
+
+    connection.commit()
+    connection.close()
+
+# Ensure the listings table exists before using it
+create_table_if_not_exists(os.path.join(os.path.dirname(__file__), "..", "sql", "create_table.sql"))
 
 # Define the Listings table
 class Listings(Base):
@@ -322,3 +323,4 @@ class Listings(Base):
         finally:
             # Close the session
             session.close()
+
