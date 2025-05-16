@@ -182,10 +182,28 @@ class ListingsInfo:
                 # Print the extracted information for debugging
                 if self.print_output:
                     print("= Card Info:")
+                    printed = set()
                     for field, method in fields:
-                        # Convert snake_case to Title Case with spaces for display
-                        display_name = field.replace("_", " ").title()
-                        print(f"> {display_name}: {listing[field]}")
+                        if field in ["listing_id", "listing_url"] and "listing_id_url" not in printed:
+                            print(f"> Listing ID: {listing['listing_id']} | URL: {listing['listing_url']}")
+                            printed.add("listing_id_url")
+                        elif field in ["closest_mrt", "distance_to_closest_mrt"] and "closest_mrt" not in printed:
+                            print(f"> Closest MRT: {listing['closest_mrt']} ({listing['distance_to_closest_mrt']} m)")
+                            printed.add("closest_mrt")
+                        elif field in ["agent_name", "agent_rating"] and "agent" not in printed:
+                            print(f"> Agent: {listing['agent_name']} | Rating: {listing['agent_rating']}")
+                            printed.add("agent")
+                        elif field in ["selling_price", "selling_price_text"] and "selling_price" not in printed:
+                            print(f"> Selling Price: {listing['selling_price']:.2f} ({listing['selling_price_text']})")
+                            printed.add("selling_price")
+                        elif field not in [
+                            "listing_id", "listing_url",
+                            "closest_mrt", "distance_to_closest_mrt",
+                            "agent_name", "agent_rating",
+                            "selling_price", "selling_price_text"
+                        ]:
+                            display_name = field.replace("_", " ").title()
+                            print(f"> {display_name}: {listing[field]}")
                     print("")
 
                 # Add the extracted listing information to the list
