@@ -1,22 +1,28 @@
 # src/main.py
 from database import Session, ListingsSample
 from scraper.initial_full_scrape import PropertyGuruInitialScraper
+from sqlalchemy import text
 
 if __name__ == '__main__':
     try:
         # Database connection
-        print("-----------------------")
+        print("┌---------------------┐")
         print("| Database Connection |")
-        print("-----------------------")
+        print("└---------------------┘")
 
-        # Create a database session and fetch all listings
+        # Create a new session and test the connection
         session = Session()
-        # ListingsSample.fetch_all(session)
+        session.execute(text("SELECT 1"))
+        print(f"> Host: {session.bind.url.host}")
+        print(f"> Port: {session.bind.url.port}")
+        print(f"> User: {session.bind.url.username}")
+        print(f"> Database: {session.bind.url.database}")
+        print("")
 
         # Initial full scrape
-        print("-----------------------")
+        print("┌---------------------┐")
         print("| Initial Full Scrape |")
-        print("-----------------------")
+        print("└---------------------┘")
 
         # Run the initial full scrape
         # Temporarily set to "Rent" mode and "Room" unit type for testing
