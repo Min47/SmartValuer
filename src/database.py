@@ -10,59 +10,70 @@ import os
 import pymysql
 import random
 
-# Load properties from .env file
-env = dotenv_values(".env")
-DATABASE_USER = os.environ.get("DATABASE_USER", env.get("DATABASE_USER"))
-DATABASE_PASSWORD = os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWORD"))
-DATABASE_HOST = os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST"))
-DATABASE_PORT = os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT"))
-DATABASE_NAME = os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME"))
+# --- Configuration ---
+def load_db_config():
+    env = dotenv_values(".env")
+    return {
+        "user": os.environ.get("DATABASE_USER", env.get("DATABASE_USER")),
+        "password": os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWORD")),
+        "host": os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST")),
+        "port": os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT")),
+        "name": os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME")),
+    }
 
-# Construct the DATABASE_URL without specifying the database name
-BASE_DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}"
+DB_CONFIG = load_db_config()
 
-# Create an engine to connect to the server
-base_engine = create_engine(BASE_DATABASE_URL)
+# --- SQLAlchemy setup ---
+BASE_DATABASE_URL = (
+    f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@"
+    f"{DB_CONFIG['host']}:{DB_CONFIG['port']}"
+)
+DATABASE_URL = f"{BASE_DATABASE_URL}/{DB_CONFIG['name']}"
 
-# Check if the database exists, and create it if it doesn't
-with base_engine.connect() as connection:
-    result = connection.execute(text(f"SHOW DATABASES LIKE '{DATABASE_NAME}';"))
-    if not result.fetchone():
-        connection.execute(text(f"CREATE DATABASE {DATABASE_NAME};"))
-        print(f"Database '{DATABASE_NAME}' created.")
-
-# Construct the full DATABASE_URL with the database name
-DATABASE_URL = f"{BASE_DATABASE_URL}/{DATABASE_NAME}"
-
-# SQLAlchemy setup
-engine = create_engine(DATABASE_URL)
 Base = declarative_base()
+engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
-# Create the table if it doesn't exist
+# --- Database and Table Creation ---
+def ensure_database_exists():
+    """Create the database if it does not exist."""
+    base_engine = create_engine(BASE_DATABASE_URL)
+    with base_engine.connect() as connection:
+        result = connection.execute(text(f"SHOW DATABASES LIKE '{DB_CONFIG['name']}';"))
+        if not result.fetchone():
+            connection.execute(text(f"CREATE DATABASE {DB_CONFIG['name']};"))
+            print(f"> Database '{DB_CONFIG['name']}' created.")
+
 def create_table_if_not_exists(sql_file_path):
+    """Create a table using the SQL in the given file if it does not exist."""
     sql_file_path = os.path.abspath(sql_file_path)
+    if not os.path.exists(sql_file_path):
+        print(f"> SQL file not found: {sql_file_path}")
+        return
     with open(sql_file_path, "r", encoding="utf-8") as f:
         create_table_sql = f.read()
-
     connection = pymysql.connect(
-        host=DATABASE_HOST,
-        user=DATABASE_USER,
-        password=DATABASE_PASSWORD,
-        database=DATABASE_NAME,
-        port=int(DATABASE_PORT)
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        database=DB_CONFIG['name'],
+        port=int(DB_CONFIG['port'])
     )
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(create_table_sql)
+        connection.commit()
+    except Exception as e:
+        print(f"> Error creating table: {e}")
+    finally:
+        connection.close()
 
-    with connection.cursor() as cursor:
-        cursor.execute(create_table_sql)
+# --- Ensure DB and Table(s) exist ---
+ensure_database_exists()
+SQL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql"))
+create_table_if_not_exists(os.path.join(SQL_DIR, "create_table.sql"))
 
-    connection.commit()
-    connection.close()
-
-# Ensure the listings table exists before using it
-create_table_if_not_exists(os.path.join(os.path.dirname(__file__), "..", "sql", "create_table.sql"))
-
-# Define the Listings table
+# --- SQLAlchemy Models ---
 class Listings(Base):
     __tablename__ = "listings"
 
@@ -82,7 +93,10 @@ class Listings(Base):
     agent_name = Column(String(255))
     agent_rating = Column(Float, default=None)
     listing_type = Column(Enum("Buy", "Rent", name="listing_type_enum"), nullable=False)
-    unit_type = Column(Enum("Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom", name="unit_type_enum"), nullable=False)
+    unit_type = Column(Enum(
+        "Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom",
+        name="unit_type_enum"
+    ), nullable=False)
     selling_price = Column(Float, default=None)
     selling_price_text = Column(String(255), default=None)
 
@@ -98,21 +112,16 @@ class Listings(Base):
     land_size_sqft = Column(Integer, default=None)
     psf_floor = Column(Float, default=None)
     psf_land = Column(Float, default=None)
-
-    # Datetime
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())  # Use func.now() for default timestamp
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())  # Use func.now() for default timestamp
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        # # Run validation checks
-        # self.validate()
-
     def __repr__(self):
         return f"<Listing(id={self.id}, title={self.title}, address={self.address}>"
-    
+
     def validate(self):
         if not self.listing_id:
             raise ValueError("listing_id cannot be empty.")
@@ -207,9 +216,7 @@ class Listings(Base):
                 if changed:
                     # 3. Only update if something changed
                     for col in cls.__table__.columns.keys():
-                        if col in ["id", "created_at", "updated_at"]:
-                            continue
-                        if col in kwargs:
+                        if col not in ["id", "created_at", "updated_at"] and col in kwargs:
                             setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
                     session.commit()
@@ -219,7 +226,6 @@ class Listings(Base):
                     print(f"> Ignore | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')} ")
                     return "ignore"
             else:
-                # Insert new row
                 new_listing = cls(**kwargs)
                 session.add(new_listing)
                 session.commit()
@@ -234,9 +240,7 @@ class Listings(Base):
     @classmethod
     def batch_upsert_listings(cls, session, listings):
         print(f"= Batch Upsert Listings:")
-        insert_count = 0
-        update_count = 0
-        ignore_count = 0
+        insert_count = update_count = ignore_count = 0
         total_insert = getattr(cls, "_total_insert", 0)
         total_update = getattr(cls, "_total_update", 0)
         total_ignore = getattr(cls, "_total_ignore", 0)
@@ -323,4 +327,3 @@ class Listings(Base):
         finally:
             # Close the session
             session.close()
-
