@@ -9,10 +9,12 @@ import os
 import re
 
 class ScraperUtils:
-    def __init__(self, mode, unit_type):
+    def __init__(self, session, mode, unit_type):
+        self.session = session
         self.mode = mode
         self.unit_type = unit_type
-        self.listings = []
+        self.cur_page_listings = []
+        self.all_listings = []
 
     def scrape_listings(self, desired_pages=None):
         cur_page = 1
@@ -60,7 +62,12 @@ class ScraperUtils:
 
                     # Extract the listing information from the cards
                     listings_info = ListingsInfo(cards, self.mode, self.unit_type)
-                    self.listings.extend(listings_info.listings)
+                    self.cur_page_listings = listings_info.cur_page_listings
+                    self.all_listings.extend(self.cur_page_listings)
+
+                    # Save the listings to the database
+                    self.save_to_db(self.session)
+                    print("")
 
                     # # Dynamically determine the maximum number of pages
                     # # Not yet verify the element
@@ -83,12 +90,11 @@ class ScraperUtils:
 
                     # Increment the page number
                     cur_page += 1
-                    print("")
                 except Exception as e:
                     print(f"❌ Error on Page {cur_page}: {e}")
                     break
 
-    def scrape_details(self, session):
+    def scrape_details(self):
         # Info:
         # Description
         # Property Type
@@ -103,36 +109,35 @@ class ScraperUtils:
         # PSF Land
         pass
 
+    # Use all listings to save to CSV
     def save_to_csv(self, filename="data/listings.csv"):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        if not self.listings:
+        if not self.all_listings:
             print("= No listings to save.")
             return
     
         # Dynamically detect fieldnames from the first listing
-        fieldnames = self.listings[0].keys()
+        fieldnames = self.all_listings[0].keys()
     
         with open(filename, mode='w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(self.listings)
-        print(f"= Saved {len(self.listings)} Listings to {filename}")
+            writer.writerows(self.all_listings)
+        print(f"= Saved {len(self.all_listings)} Listings to {filename}")
 
+    # Use current page listings to save to DB, since the listings will be saved per page
     def save_to_db(self, session):
         # Save the listings to the database
-        for listing in self.listings:
-            try:
-                # Dynamically pass all fields in the listing dictionary
-                ListingsSample.upsert_listing(session, **listing)
-            except Exception as e:
-                print(f"❌ Error Saving to DB: {e}")
-        print(f"= Saved {len(self.listings)} Listings to Database")
+        try:
+            ListingsSample.batch_upsert_listings(session, self.cur_page_listings)
+        except Exception as e:
+            print(f"❌ Error Saving to DB: {e}")
 
 class ListingsInfo:
     def __init__(self, cards, mode, unit_type):
         self.mode = mode
         self.unit_type = unit_type
-        self.listings = []
+        self.cur_page_listings = []
         self.print_output = True
         self.extract_listings(cards)
 
@@ -184,7 +189,7 @@ class ListingsInfo:
                     print("")
 
                 # Add the extracted listing information to the list
-                self.listings.append(listing)
+                self.cur_page_listings.append(listing)
             except Exception as e:
                 print(f"❌ Error on Listings Cards Info Extraction: {e}")
 

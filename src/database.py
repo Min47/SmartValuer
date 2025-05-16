@@ -188,7 +188,7 @@ class ListingsSample(Base):
 
     @classmethod
     def upsert_listing(cls, session, **kwargs):
-        print(f"= Upsert New Listing: {kwargs.get('title', 'Unknown')}")
+        # print(f"= Upsert New Listing: {kwargs.get('title', 'Unknown')}")
         try:
             # 1. Try to fetch the existing row by unique key
             existing = session.query(cls).filter_by(listing_id=kwargs.get("listing_id")).first()
@@ -212,19 +212,58 @@ class ListingsSample(Base):
                             setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
                     session.commit()
-                    print(f"> Listing Updated | Listing ID: {kwargs.get('listing_id', 'Unknown')}")
+                    print(f"> Update | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
+                    return "update"
                 else:
-                    print("> No changes detected, skipping update.")
+                    print(f"> Ignore | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')} ")
+                    return "ignore"
             else:
                 # Insert new row
                 new_listing = cls(**kwargs)
                 session.add(new_listing)
                 session.commit()
-                print(f"> Listing Inserted | Listing ID: {kwargs.get('listing_id', 'Unknown')}")
-
+                print(f"> Insert | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
+                return "insert"
         except IntegrityError as e:
             session.rollback()
             print(f"> Error: Could Not Upsert Listing. Reason: {e.orig}\n")
+        finally:
+            session.close()
+
+    @classmethod
+    def batch_upsert_listings(cls, session, listings):
+        print(f"= Batch Upsert Listings:")
+        insert_count = 0
+        update_count = 0
+        ignore_count = 0
+        total_insert = getattr(cls, "_total_insert", 0)
+        total_update = getattr(cls, "_total_update", 0)
+        total_ignore = getattr(cls, "_total_ignore", 0)
+
+        try:
+            # Capture the output of upsert_listing
+            for listing in listings:
+                result = cls.upsert_listing(session, **listing)
+                if result == "insert":
+                    insert_count += 1
+                    total_insert += 1
+                elif result == "update":
+                    update_count += 1
+                    total_update += 1
+                elif result == "ignore":
+                    ignore_count += 1
+                    total_ignore += 1
+
+            # Store cumulative totals as class attributes
+            cls._total_insert = total_insert
+            cls._total_update = total_update
+            cls._total_ignore = total_ignore
+
+            # Print cumulative counts
+            print(f"= Counts | Insert: {insert_count} ({total_insert}) | Update: {update_count} ({total_update}) | Ignore: {ignore_count} ({total_ignore})")
+        except Exception as e:
+            session.rollback()
+            print(f"> Error: Batch Upsert Failed. Reason: {e}\n")
         finally:
             session.close()
 
