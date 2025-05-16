@@ -194,7 +194,10 @@ class ListingsInfo:
                             print(f"> Agent: {listing['agent_name']} | Rating: {listing['agent_rating']}")
                             printed.add("agent")
                         elif field in ["selling_price", "selling_price_text"] and "selling_price" not in printed:
-                            print(f"> Selling Price: {listing['selling_price']:.2f} ({listing['selling_price_text']})")
+                            if listing['selling_price'] is not None:
+                                print(f"> Selling Price: {listing['selling_price']:.2f} ({listing['selling_price_text']})")
+                            else:
+                                print(f"> Selling Price: {listing['selling_price']} ({listing['selling_price_text']})")
                             printed.add("selling_price")
                         elif field not in [
                             "listing_id", "listing_url",
