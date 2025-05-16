@@ -21,9 +21,18 @@ class ScraperUtils:
         max_pages = 99  # Temporary default value for maximum pages
 
         # Filters
-        print(f"= Scraping Mode: {self.mode}")
-        print(f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f"{self.unit_type} Bedroom"}")
-        print(f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}")
+        lines = [
+            f"= Scraping Mode: {self.mode}",
+            f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type} Bedroom+'}",
+            f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}"
+        ]
+        max_len = max(len(line) for line in lines)
+        header = "┌" + "─" * (max_len + 2) + "┐"
+        footer = "└" + "─" * (max_len + 2) + "┘"
+        print(header)
+        for line in lines:
+            print(f"| {line.ljust(max_len)} |")
+        print(footer)
         print("")
 
         # Run the scraper with a context manager
