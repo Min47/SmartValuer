@@ -58,34 +58,20 @@ if __name__ == '__main__':
         validate_modes(modes)
         validate_unit_types(unit_types)
 
-        # Database connection
-        print("┌---------------------┐")
-        print("| Database Connection |")
-        print("└---------------------┘")
-        print("")
-
-        # Initialize database with env/config
+        # Initialize database with env/config and create session
         database.init_db(db_config)
-
-        # Create a new session and test the connection
         session = database.Session()
         session.execute(text("SELECT 1"))
+        print("")
         print(f"> Host: {session.bind.url.host}")
         print(f"> Port: {session.bind.url.port}")
         print(f"> User: {session.bind.url.username}")
         print(f"> Database: {session.bind.url.database}")
         print("")
 
-        # Initial full scrape
-        print("┌---------------------┐")
-        print("| Initial Full Scrape |")
-        print("└---------------------┘")
-        print("")
-
-        # Testing purpose
-        modes = ["Rent", "Buy"]
-        unit_types = [-1, 0, 5]
-
+        # # Testing purpose
+        # modes = ["Rent", "Buy"]
+        # unit_types = [-1, 0, 5]
         for mode in modes:
             for unit_type in unit_types:
                 if mode == "Buy" and unit_type == -1:
