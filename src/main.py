@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
         # Create a database session and fetch all listings
         session = Session()
-        ListingsSample.fetch_all(session)
+        # ListingsSample.fetch_all(session)
 
         # Initial full scrape
         print("-----------------------")
