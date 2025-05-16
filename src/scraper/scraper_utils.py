@@ -22,7 +22,7 @@ class ScraperUtils:
 
         # Filters
         print(f"= Scraping Mode: {self.mode}")
-        print(f"= Unit Type: {self.unit_type}")
+        print(f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f"{self.unit_type} Bedroom"}")
         print(f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}")
         print("")
 
@@ -31,7 +31,7 @@ class ScraperUtils:
             while True:
                 try:
                     # Page
-                    print(f"= Page {cur_page} =")
+                    print(f"= Page {cur_page}")
                     
                     # Construct the URL based on the filters
                     if self.mode == "Rent":
