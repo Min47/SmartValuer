@@ -70,8 +70,8 @@ if __name__ == '__main__':
         print("")
 
         # # Testing purpose
-        # modes = ["Rent", "Buy"]
-        # unit_types = [-1, 0, 5]
+        modes = ["Rent", "Buy"]
+        unit_types = [-1, 0, 5]
         for mode in modes:
             for unit_type in unit_types:
                 if mode == "Buy" and unit_type == -1:
