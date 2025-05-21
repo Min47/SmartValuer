@@ -94,7 +94,7 @@ if __name__ == '__main__':
                     )
                 finally:
                     session.close()
-                print("Sleeping for 30 seconds...")
+                # print("Sleeping for 30 seconds...")
                 time.sleep(30)  # Sleep for 30 second between different modes and unit types
 
     except Exception as e:

@@ -40,7 +40,13 @@ class ScraperUtils:
             while True:
                 try:
                     # Page
-                    print(f"= Page {cur_page}")
+                    page_line = f"Page {cur_page}"
+                    page_header = "┌" + "─" * (len(page_line) + 2) + "┐"
+                    page_footer = "└" + "─" * (len(page_line) + 2) + "┘"
+                    print(page_header)
+                    print(f"| {page_line} |")
+                    print(page_footer)
+                    print("")
                     
                     # Construct the URL based on the filters
                     if self.mode == "Rent":
@@ -104,15 +110,16 @@ class ScraperUtils:
 
                     # Check if reached the maximum page limit
                     if cur_page >= max_pages:
-                        print(f"> Reached Maximum Page Limit: {max_pages}.")
+                        print(f"> Reached Maximum Page Limit: {max_pages}")
                         break
                     # Check if reached the desired page limit
                     if desired_pages is not None and cur_page >= desired_pages:
-                        print(f"> Reached Desired Page Limit: {desired_pages}.")
+                        print(f"> Reached Desired Page Limit: {desired_pages}")
                         break
 
                     # Increment the page number
                     cur_page += 1
+                    print("")
                 except Exception as e:
                     print(f"❌ Error on Page {cur_page}: {e}")
                     break
@@ -149,7 +156,7 @@ class ScraperUtils:
             if write_header:
                 writer.writeheader()
             writer.writerows(self.all_listings)
-        print(f"= Saved {len(self.all_listings)} Listings to {filename}")
+        # print(f"= Saved {len(self.all_listings)} Listings to {filename}")
 
     # Use current page listings to save to DB, since the listings will be saved per page
     def save_to_db(self, session):
