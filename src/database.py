@@ -128,7 +128,7 @@ class Listings(Base):
     psf_floor = Column(Float, default=None)
     psf_land = Column(Float, default=None)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(TIMESTAMP, nullable=True, default=None)
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
