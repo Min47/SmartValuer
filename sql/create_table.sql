@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS properties (
 	listed_date DATE DEFAULT NULL,
 	agent_name VARCHAR(255),
 	agent_rating FLOAT DEFAULT NULL,
-	property_type ENUM('Buy', 'Rent') NOT NULL,
+	property_selling_type ENUM('Buy', 'Rent') NOT NULL,
 	unit_type ENUM('Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4 Bedroom', '5+ Bedroom') NOT NULL,
 	selling_price DECIMAL(12,2) DEFAULT NULL,
 	selling_price_text VARCHAR(255) DEFAULT NULL,
@@ -33,5 +33,5 @@ CREATE TABLE IF NOT EXISTS properties (
 	updated_at TIMESTAMP NULL DEFAULT NULL,
 	updated_fields TEXT DEFAULT NULL,
 	updated_old_values TEXT DEFAULT NULL,
-	UNIQUE KEY unique_property (property_id, property_type, unit_type)
+	UNIQUE KEY unique_property (property_id, property_selling_type, unit_type)
 );

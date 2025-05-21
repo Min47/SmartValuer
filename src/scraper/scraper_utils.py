@@ -214,7 +214,7 @@ class ListingsInfo:
             ("listed_date", "get_listed_date"),
             ("agent_name", "get_agent_name"),
             ("agent_rating", "get_agent_rating"),
-            ("property_type", "get_property_type"),
+            ("property_selling_type", "get_property_selling_type"),
             ("unit_type", "get_unit_type"),
             ("selling_price", "get_selling_price"),
             ("selling_price_text", "get_selling_price_text"),
@@ -228,8 +228,8 @@ class ListingsInfo:
 
                 # # Call the method dynamically
                 for field, method in fields:
-                    if field in ["property_type", "unit_type"]:
-                        # For property_type and unit_type, use the class attributes
+                    if field in ["property_selling_type", "unit_type"]:
+                        # For property_selling_type and unit_type, use the class attributes
                         listing[field] = getattr(self, method)()
                     else:
                         # For other fields, call the respective method
@@ -419,8 +419,8 @@ class ListingsInfo:
         finally:
             return agent_rating
         
-    def get_property_type(self):
-        return self.mode  # Return the mode (Rent or Buy) as the property type
+    def get_property_selling_type(self):
+        return self.mode  # Return the mode (Rent or Buy) as the property selling type
     
     def get_unit_type(self):
         if self.unit_type == -1:

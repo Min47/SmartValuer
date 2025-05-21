@@ -91,7 +91,7 @@ class Properties(Base):
     __tablename__ = "properties"
     __table_args__ = (
         # Composite unique constraint
-        UniqueConstraint('property_id', 'property_type', 'unit_type', name='unique_property'),
+        UniqueConstraint('property_id', 'property_selling_type', 'unit_type', name='unique_property'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -108,7 +108,7 @@ class Properties(Base):
     listed_date = Column(Date, default=None)
     agent_name = Column(String(255))
     agent_rating = Column(Float, default=None)
-    property_type = Column(Enum("Buy", "Rent", name="property_type_enum"), nullable=False)
+    property_selling_type = Column(Enum("Buy", "Rent", name="property_selling_type_enum"), nullable=False)
     unit_type = Column(Enum(
         "Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom",
         name="unit_type_enum"
@@ -152,8 +152,8 @@ class Properties(Base):
             raise ValueError("property_url cannot be empty.")
         if not self.agent_name:
             raise ValueError("agent_name cannot be empty.")
-        if not self.property_type:
-            raise ValueError("property_type cannot be empty.")
+        if not self.property_selling_type:
+            raise ValueError("property_selling_type cannot be empty.")
         if not self.property_type:
             raise ValueError("property_type cannot be empty.")
         if not self.unit_type:
@@ -195,7 +195,7 @@ class Properties(Base):
             # 1. Try to fetch the existing row by unique key
             existing = new_session.query(cls).filter_by(
                 property_id=kwargs.get("property_id"),
-                property_type=kwargs.get("property_type"),
+                property_selling_type=kwargs.get("property_selling_type"),
                 unit_type=kwargs.get("unit_type")
             ).first()
     
