@@ -186,36 +186,6 @@ class Listings(Base):
         if self.is_everyone_welcomed is not None and not isinstance(self.is_everyone_welcomed, bool):
             raise ValueError("is_everyone_welcomed must be a boolean.")
 
-    @staticmethod
-    def fetch_all(session):
-        print("= Fetching All Listings:")
-
-        try:
-            listings = session.query(Listings).all()
-            for listing in listings:
-                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}, Distance_to_Closest_MRT: {listing.distance_to_closest_mrt}")
-            print("")
-            return listings
-        except Exception as e:
-            print(f"> Error: Fetching All Data: {e}\n")
-            return []
-
-    @staticmethod
-    def fetch_by_id(session, listing_id):
-        print(f"= Fetching Listing by ID: {listing_id}")
-
-        try:
-            listing = session.query(Listings).filter_by(id=listing_id).first()
-            if listing:
-                print(f"> Title: {listing.title}, Price: {listing.selling_price}, Listing_Type: {listing.listing_type}, Unit_Type: {listing.unit_type}")
-            else:
-                print(f"> No listing found with ID: {listing_id}")
-            print("")
-            return listing
-        except Exception as e:
-            print(f"> Error: Fetching Data by ID: {e}\n")
-            return None
-
     @classmethod
     def upsert_listing(cls, **kwargs):
         # Always use the global Session factory to create a new session
@@ -328,32 +298,3 @@ class Listings(Base):
             print(f"> Error: Could Not Delete Listing. Reason: {e}\n")
         finally:
             new_session.close()
-
-    @classmethod
-    def test_listing(cls):
-        try:
-            # Generate a random 8-digit listing_id
-            random_listing_id = f"{random.randint(10000000, 99999999)}"
-
-            # Use the upsert_listing class method to add a new listing
-            cls.upsert_listing(
-                listing_id=random_listing_id,  # Random 8-digit identifier
-                title="Luxury Condo",
-                address="123 Main Street",
-                listing_url="https://example.com/listing",
-                listed_date=date.today(),
-                agent_name="John Doe",
-                property_type="condo",
-                listing_type="Buy",
-                unit_type="studio",
-                selling_price=1200000.00,
-                bedroom_count=2,
-                bathroom_count=2,
-                floor_size_sqft=1000
-            )
-
-            # Delete the test listing using the random listing_id
-            cls.delete_listing(listing_id=random_listing_id)
-
-        except Exception as e:
-            print(f"Error during test_listing: {e}")
