@@ -126,10 +126,12 @@ class ScraperUtils:
                     # Check if reached the maximum page limit
                     if cur_page >= max_pages:
                         print(f"> Reached Maximum Page Limit: {max_pages}")
+                        print("")
                         break
                     # Check if reached the desired page limit
                     if desired_pages is not None and cur_page >= desired_pages:
                         print(f"> Reached Desired Page Limit: {desired_pages}")
+                        print("")
                         break
 
                     # Increment the page number
@@ -140,27 +142,102 @@ class ScraperUtils:
                     print(f"❌ Error on Page {cur_page}: {e}")
                     break
 
-    def scrape_details(self):
-        # Info:
-        # Description
-        # Property Type
-        # Property Type Text
-        # Ownership Type
-        # Ownership Type Text
-        # Bedroom Count
-        # Bathroom Count
-        # Floor Size (sqft)
-        # Land Size (sqft)
-        # PSF Floor
-        # PSF Land
+    def scrape_details(self, max_scrape=5):
+        # Query the database for properties that need details
+        properties_pending = self.session.query(Properties).filter_by(details_fetched=False).all()
+        properties_pending_limited = properties_pending[:max_scrape] if max_scrape > 0 else properties_pending
+        properties = properties_pending_limited if max_scrape > 0 else properties_pending
+        lines = [
+            "= Scraping Details",
+            f"= Properties Pending: {len(properties_pending)}",
+            f"= Properties to Scrape: {len(properties)}",
+        ]
+        max_len = max(len(line) for line in lines)
+        header = "┌" + "─" * (max_len + 2) + "┐"
+        footer = "└" + "─" * (max_len + 2) + "┘"
+        print(header)
+        for line in lines:
+            print(f"| {line.ljust(max_len)} |")
+        print(footer)
+        print("")
+        if not properties:
+            return
+        
+        print("1111")
+        
+        # print(f"= Scraping details for up to {max_scrape} properties...")
+        # with SB(uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:
+        #     for idx, prop in enumerate(properties, 1):
+        #         try:
+        #             print(f"\n[{idx}/{len(properties)}] Scraping details for: {prop.property_url}")
+        #             sb.uc_open_with_reconnect(prop.property_url, 4)
+        #             sb.uc_gui_click_captcha()
+        #             sb.sleep(2)
 
-        # Query the database for listings that need details
-        listings = self.session.query(Properties).filter_by(details_fetched=False).all()
+        #             # --- Scrape details here ---
+        #             # Example: description = sb.find_element(...).text
+        #             # Fill in your scraping logic and assign to variables
+        #             # Info:
+        #             # Description
+        #             # Property Type
+        #             # Property Type Text
+        #             # Ownership Type
+        #             # Ownership Type Text
+        #             # Bedroom Count
+        #             # Bathroom Count
+        #             # Floor Size (sqft)
+        #             # Land Size (sqft)
+        #             # PSF Floor
+        #             # PSF Land
 
-        # # After scraping details for a property
-        # property.details_fetched = True
-        # self.session.commit()
-        pass
+        #             # Example stub (replace with real scraping):
+        #             description = "Scraped description"
+        #             property_type = "condo"
+        #             property_type_text = "Condominium"
+        #             ownership_type = "freehold"
+        #             ownership_type_text = "Freehold"
+        #             bedroom_count = 3
+        #             bathroom_count = 2
+        #             floor_size_sqft = 1200
+        #             land_size_sqft = None
+        #             psf_floor = None
+        #             psf_land = None
+
+        #             # # Save to DB
+        #             # self.save_to_db_details(
+        #             #     prop,
+        #             #     description=description,
+        #             #     property_type=property_type,
+        #             #     property_type_text=property_type_text,
+        #             #     ownership_type=ownership_type,
+        #             #     ownership_type_text=ownership_type_text,
+        #             #     bedroom_count=bedroom_count,
+        #             #     bathroom_count=bathroom_count,
+        #             #     floor_size_sqft=floor_size_sqft,
+        #             #     land_size_sqft=land_size_sqft,
+        #             #     psf_floor=psf_floor,
+        #             #     psf_land=psf_land
+        #             # )
+
+        #             # Mark as fetched and commit
+        #             prop.details_fetched = True
+        #             self.session.commit()
+        #             print("> Details updated in DB.")
+
+        #             # Sleep to avoid blocking
+        #             sleep_time = random.uniform(2, 5)
+        #             print(f"> Sleeping for {sleep_time:.2f} seconds...")
+        #             time.sleep(sleep_time)
+
+        #         except Exception as e:
+        #             print(f"❌ Error scraping details for {prop.property_url}: {e}")
+        #             self.session.rollback()
+        #             continue
+
+        # # # After scraping details for a property
+        # # property.details_fetched = True
+        # # self.session.commit()
+        # pass
 
     # Use all properties to save to CSV
     def save_to_csv(self, filename="data/properties.csv"):
@@ -188,6 +265,13 @@ class ScraperUtils:
             Properties.batch_upsert_listings(session, self.cur_page_listings)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
+
+    # def save_to_db_details(self, prop, **details):
+    #     """
+    #     Update the given property row with scraped details.
+    #     """
+    #     for key, value in details.items():
+    #         setattr(prop, key, value)
 
 class ListingsInfo:
     def __init__(self, cards, mode, unit_type):

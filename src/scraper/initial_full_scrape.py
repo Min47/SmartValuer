@@ -11,6 +11,7 @@ class PropertyGuruInitialScraper:
 
             scraper = ScraperUtils(session=session, mode=mode, unit_type=unit_type)
             scraper.scrape_listings(desired_pages=desired_pages)
+            scraper.scrape_details(max_scrape=5)
             scraper.save_to_csv(filename=filename)
             print("")
         except Exception as e:
