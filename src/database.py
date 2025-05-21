@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -88,6 +88,10 @@ def create_table_if_not_exists(sql_file_path, db_config):
 # --- SQLAlchemy Models (One class = One table)---
 class Listings(Base):
     __tablename__ = "listings"
+    __table_args__ = (
+        # Composite unique constraint
+        UniqueConstraint('listing_id', 'listing_type', 'unit_type', name='unique_listing'),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     listing_id = Column(String(255), nullable=False, unique=True)
@@ -212,7 +216,11 @@ class Listings(Base):
         # print(f"= Upsert New Listing: {kwargs.get('title', 'Unknown')}")
         try:
             # 1. Try to fetch the existing row by unique key
-            existing = session.query(cls).filter_by(listing_id=kwargs.get("listing_id")).first()
+            existing = session.query(cls).filter_by(
+                listing_id=kwargs.get("listing_id"),
+                listing_type=kwargs.get("listing_type"),
+                unit_type=kwargs.get("unit_type")
+            ).first()
 
             if existing:
                 # 2. Compare each field (skip id, created_at, updated_at)
