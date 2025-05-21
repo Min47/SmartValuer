@@ -78,23 +78,37 @@ class ScraperUtils:
                     self.save_to_db(self.session)
                     print("")
 
-                    # # Dynamically determine the maximum number of pages
-                    # # Not yet verify the element
-                    # if desired_pages is None:
-                    #     try:
-                    #         max_pages_element = sb.find_element('css selector', '.pagination-max')  # Adjust selector as needed
-                    #         max_pages = int(max_pages_element.text.strip())
-                    #         print(f"Determined Max Pages: {max_pages}")
-                    #     except Exception as e:
-                    #         print(f"❌ Error Determining Max Pages: {e}")
+                    # Pagination #
+                    # Dynamically determine the maximum number of pages
+                    page_items = sb.find_elements('//li[@class="page-item"]')
+                    max_pages = cur_page  # Default fallback
 
-                    # Check if reached the desired page limit
-                    if desired_pages is not None and cur_page >= desired_pages:
-                        print(f"= Reached Desired Page Limit: {desired_pages}.")
-                        break
+                    # Try to find the last numeric page number (skip "Next", "»", etc.)
+                    if page_items:
+                        last_page_number = None
+                        for item in reversed(page_items):
+                            text = item.text.strip()
+                            if text.isdigit():
+                                last_page_number = text
+                                break
+                        if last_page_number is not None:
+                            max_pages = int(last_page_number)
+                            print(f"= Maximum Pages: {max_pages}")
+                        else:
+                            print("= Maximum Pages: Not Found (no numeric page item)")
+                    else:
+                        print("= Maximum Pages: Not Found (no page items)")
+                    # Also print the desired pages if provided
+                    if desired_pages is not None:
+                        print(f"= Desired Pages: {desired_pages}")
+
                     # Check if reached the maximum page limit
                     if cur_page >= max_pages:
-                        print(f"= Reached Maximum Page Limit: {max_pages}.")
+                        print(f"> Reached Maximum Page Limit: {max_pages}.")
+                        break
+                    # Check if reached the desired page limit
+                    if desired_pages is not None and cur_page >= desired_pages:
+                        print(f"> Reached Desired Page Limit: {desired_pages}.")
                         break
 
                     # Increment the page number
