@@ -76,13 +76,17 @@ if __name__ == '__main__':
             for unit_type in unit_types:
                 if mode == "Buy" and unit_type == -1:
                     continue
-                PropertyGuruInitialScraper.run_scraper(
-                    mode=mode,
-                    unit_type=unit_type,
-                    desired_pages=2,
-                    session=session,
-                )
-
+                # Create a new session for each run
+                session = database.Session()
+                try:
+                    PropertyGuruInitialScraper.run_scraper(
+                        mode=mode,
+                        unit_type=unit_type,
+                        desired_pages=2,
+                        session=session,
+                    )
+                finally:
+                    session.close()
                 print("Sleeping for 30 seconds...")
                 time.sleep(30)  # Sleep for 30 second between different modes and unit types
 
