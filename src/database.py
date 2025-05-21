@@ -94,7 +94,7 @@ class Listings(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    listing_id = Column(String(255), nullable=False, unique=True)
+    listing_id = Column(String(255), nullable=False)
     title = Column(String(255), nullable=False)
     address = Column(String(255))
     listing_url = Column(Text, nullable=False)
