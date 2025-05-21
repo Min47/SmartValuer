@@ -127,10 +127,14 @@ class ScraperUtils:
     
         # Dynamically detect fieldnames from the first listing
         fieldnames = self.all_listings[0].keys()
+
+        # Check if the file already exists
+        file_exists = os.path.isfile(filename)
     
-        with open(filename, mode='w', newline='', encoding='utf-8') as f:
+        with open(filename, mode='a', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
+            if not file_exists:
+                writer.writeheader()
             writer.writerows(self.all_listings)
         print(f"= Saved {len(self.all_listings)} Listings to {filename}")
 

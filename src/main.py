@@ -58,6 +58,12 @@ if __name__ == '__main__':
         validate_modes(modes)
         validate_unit_types(unit_types)
 
+        # Clear CSV at the start of the run
+        filename = os.environ.get("LISTINGS_CSV_PATH", env.get("LISTINGS_CSV_PATH", "data/listings.csv")) # Get CSV path from env or use default
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, 'w', encoding='utf-8') as f:
+            pass  # This will clear the file
+
         # Initialize database with env/config and create session
         database.init_db(db_config)
         session = database.Session()
@@ -84,6 +90,7 @@ if __name__ == '__main__':
                         unit_type=unit_type,
                         desired_pages=2,
                         session=session,
+                        filename=filename
                     )
                 finally:
                     session.close()
