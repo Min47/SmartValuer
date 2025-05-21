@@ -46,7 +46,6 @@ class ScraperUtils:
                     print(page_header)
                     print(f"| {page_line} |")
                     print(page_footer)
-                    print("")
                     
                     # Construct the URL based on the filters
                     if self.mode == "Rent":
@@ -61,25 +60,39 @@ class ScraperUtils:
                     sb.uc_gui_click_captcha()
                     sb.sleep(2)
 
-                    # Save the HTML content to a file for debugging (optional)
-                    with open(f"data/Page_{cur_page}.html", "w", encoding="utf-8") as f:
-                        f.write(sb.get_page_source())
+                    # # Save the HTML content to a file for debugging (optional)
+                    # with open(f"data/Page_{cur_page}.html", "w", encoding="utf-8") as f:
+                    #     f.write(sb.get_page_source())
 
+                    # Total Properties #
+                    # Show the total properties found
+                    total_properties = sb.find_element(By.XPATH, './/h1[@class="page-title"]').text
+                    # Extract the number at the start (with commas)
+                    match = re.match(r"([\d,]+)", total_properties)
+                    if match:
+                        num_properties = int(match.group(1).replace(",", ""))
+                        print(f"> Total Properties: {num_properties}")
+                    else:
+                        print(f"> Total Properties not Found in Text: '{total_properties}'")
+
+                    # Total Listings For Current Page #
                     # Find the listing cards on the page
                     cards = sb.find_elements('//*[@class="listing-card-banner-root"]')
                     if not cards:
-                        print(f"> Listings Found: 0")
+                        print(f"> Listings (Current Page): 0")
                         print("")
                         break
                     else:
-                        print(f"> Listings Found: {len(cards)}")
+                        print(f"> Listings (Current Page): {len(cards)}")
                         print("")
 
+                    # Listings Info #
                     # Extract the listing information from the cards
                     listings_info = ListingsInfo(cards, self.mode, self.unit_type)
                     self.cur_page_listings = listings_info.cur_page_listings
                     self.all_listings.extend(self.cur_page_listings)
 
+                    # Database #
                     # Save the listings to the database
                     self.save_to_db(self.session)
                     print("")
