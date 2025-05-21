@@ -129,6 +129,8 @@ class Listings(Base):
     psf_land = Column(Float, default=None)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP, nullable=True, default=None)
+    updated_fields = Column(Text, default=None)  # Names of columns updated, separated by " || "
+    updated_old_values = Column(Text, default=None)  # Old values before update, separated by " || "
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -226,19 +228,24 @@ class Listings(Base):
             if existing:
                 # 2. Compare each field (skip id, created_at, updated_at)
                 changed = False
+                changed_cols = []
+                old_vals = []
                 for col in cls.__table__.columns.keys():
-                    if col in ["id", "created_at", "updated_at"]:
+                    if col in ["id", "created_at", "updated_at", "updated_fields", "updated_old_values"]:
                         continue
                     if col in kwargs and getattr(existing, col) != kwargs[col]:
                         changed = True
-                        break
+                        changed_cols.append(col)
+                        old_val = getattr(existing, col)
+                        old_vals.append("" if old_val is None else str(old_val))
     
                 if changed:
                     # 3. Only update if something changed
-                    for col in cls.__table__.columns.keys():
-                        if col not in ["id", "created_at", "updated_at"] and col in kwargs:
-                            setattr(existing, col, kwargs[col])
+                    for col in changed_cols:
+                        setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
+                    existing.updated_fields = " || ".join(changed_cols)
+                    existing.updated_old_values = " || ".join(old_vals)
                     new_session.commit()
                     print(f"> Update | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                     return "update"

@@ -30,5 +30,7 @@ CREATE TABLE IF NOT EXISTS listings (
 	psf_land FLOAT DEFAULT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NULL DEFAULT NULL,
+	updated_fields TEXT DEFAULT NULL,
+	updated_old_values TEXT DEFAULT NULL,
 	UNIQUE KEY unique_listing (listing_id, listing_type, unit_type)
 );
