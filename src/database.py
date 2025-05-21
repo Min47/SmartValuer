@@ -212,16 +212,17 @@ class Listings(Base):
             return None
 
     @classmethod
-    def upsert_listing(cls, session, **kwargs):
-        # print(f"= Upsert New Listing: {kwargs.get('title', 'Unknown')}")
+    def upsert_listing(cls, **kwargs):
+        # Always use the global Session factory to create a new session
+        new_session = Session()
         try:
             # 1. Try to fetch the existing row by unique key
-            existing = session.query(cls).filter_by(
+            existing = new_session.query(cls).filter_by(
                 listing_id=kwargs.get("listing_id"),
                 listing_type=kwargs.get("listing_type"),
                 unit_type=kwargs.get("unit_type")
             ).first()
-
+    
             if existing:
                 # 2. Compare each field (skip id, created_at, updated_at)
                 changed = False
@@ -231,14 +232,14 @@ class Listings(Base):
                     if col in kwargs and getattr(existing, col) != kwargs[col]:
                         changed = True
                         break
-
+    
                 if changed:
                     # 3. Only update if something changed
                     for col in cls.__table__.columns.keys():
                         if col not in ["id", "created_at", "updated_at"] and col in kwargs:
                             setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
-                    session.commit()
+                    new_session.commit()
                     print(f"> Update | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                     return "update"
                 else:
@@ -246,15 +247,15 @@ class Listings(Base):
                     return "ignore"
             else:
                 new_listing = cls(**kwargs)
-                session.add(new_listing)
-                session.commit()
+                new_session.add(new_listing)
+                new_session.commit()
                 print(f"> Insert | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                 return "insert"
         except IntegrityError as e:
-            session.rollback()
+            new_session.rollback()
             print(f"> Error: Could Not Upsert Listing. Reason: {e.orig}\n")
         finally:
-            session.close()
+            new_session.close()
 
     @classmethod
     def batch_upsert_listings(cls, session, listings):
@@ -267,7 +268,7 @@ class Listings(Base):
         try:
             # Capture the output of upsert_listing
             for listing in listings:
-                result = cls.upsert_listing(session, **listing)
+                result = cls.upsert_listing(**listing)
                 if result == "insert":
                     insert_count += 1
                     total_insert += 1
@@ -288,40 +289,36 @@ class Listings(Base):
         except Exception as e:
             session.rollback()
             print(f"> Error: Batch Upsert Failed. Reason: {e}\n")
-        finally:
-            session.close()
 
     @classmethod
-    def delete_listing(cls, session, listing_id):
+    def delete_listing(cls, listing_id):
+        # Always use the global Session factory to create a new session
+        new_session = Session()
         print(f"= Deleting Listing with ID: {listing_id}")
 
         try:
-            listing = session.query(cls).filter_by(listing_id=listing_id).first()
+            listing = new_session.query(cls).filter_by(listing_id=listing_id).first()
             if listing:
-                session.delete(listing)
-                session.commit()
+                new_session.delete(listing)
+                new_session.commit()
                 print(f"> Listing with listing_id {listing_id} deleted successfully!")
             else:
                 print(f"> No listing found with listing_id {listing_id}.")
             print("")
         except Exception as e:
-            session.rollback()
+            new_session.rollback()
             print(f"> Error: Could Not Delete Listing. Reason: {e}\n")
         finally:
-            session.close()
+            new_session.close()
 
     @classmethod
     def test_listing(cls):
-        # Create a session
-        session = Session()
-
         try:
             # Generate a random 8-digit listing_id
             random_listing_id = f"{random.randint(10000000, 99999999)}"
 
             # Use the upsert_listing class method to add a new listing
             cls.upsert_listing(
-                session,
                 listing_id=random_listing_id,  # Random 8-digit identifier
                 title="Luxury Condo",
                 address="123 Main Street",
@@ -338,11 +335,7 @@ class Listings(Base):
             )
 
             # Delete the test listing using the random listing_id
-            cls.delete_listing(session, listing_id=random_listing_id)
+            cls.delete_listing(listing_id=random_listing_id)
 
         except Exception as e:
-            session.rollback()
             print(f"Error during test_listing: {e}")
-        finally:
-            # Close the session
-            session.close()
