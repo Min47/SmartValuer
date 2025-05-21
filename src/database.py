@@ -1,5 +1,6 @@
 from datetime import date
-from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text, UniqueConstraint
+from decimal import Decimal
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text, UniqueConstraint, DECIMAL
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -112,7 +113,7 @@ class Listings(Base):
         "Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom",
         name="unit_type_enum"
     ), nullable=False)
-    selling_price = Column(Float, default=None)
+    selling_price = Column(DECIMAL(12, 2), default=None)
     selling_price_text = Column(String(255), default=None)
 
     # Property Details
@@ -125,8 +126,8 @@ class Listings(Base):
     bathroom_count = Column(Integer, default=None)
     floor_size_sqft = Column(Integer, default=None)
     land_size_sqft = Column(Integer, default=None)
-    psf_floor = Column(Float, default=None)
-    psf_land = Column(Float, default=None)
+    psf_floor = Column(DECIMAL(12, 2), default=None)
+    psf_land = Column(DECIMAL(12, 2), default=None)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP, nullable=True, default=None)
     updated_fields = Column(Text, default=None)  # Names of columns updated, separated by " || "
@@ -242,7 +243,11 @@ class Listings(Base):
                 if changed:
                     # 3. Only update if something changed
                     for col in changed_cols:
-                        setattr(existing, col, kwargs[col])
+                        # Convert to Decimal for price fields
+                        if col in ["selling_price", "psf_floor", "psf_land"] and kwargs[col] is not None:
+                            setattr(existing, col, Decimal(str(kwargs[col])))
+                        else:
+                            setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
                     existing.updated_fields = " || ".join(changed_cols)
                     existing.updated_old_values = " || ".join(old_vals)
@@ -253,6 +258,10 @@ class Listings(Base):
                     print(f"> Ignore | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')} ")
                     return "ignore"
             else:
+                # Ensure decimal fields are Decimal before creating new listing
+                for col in ["selling_price", "psf_floor", "psf_land"]:
+                    if col in kwargs and kwargs.get(col) is not None:
+                        kwargs[col] = Decimal(str(kwargs[col]))
                 new_listing = cls(**kwargs)
                 new_session.add(new_listing)
                 new_session.commit()
