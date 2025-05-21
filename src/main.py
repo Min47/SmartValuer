@@ -59,7 +59,7 @@ if __name__ == '__main__':
         validate_unit_types(unit_types)
 
         # Clear CSV at the start of the run
-        filename = os.environ.get("LISTINGS_CSV_PATH", env.get("LISTINGS_CSV_PATH", "data/listings.csv")) # Get CSV path from env or use default
+        filename = os.environ.get("PROPERTIES_CSV_PATH", env.get("PROPERTIES_CSV_PATH", "data/properties.csv")) # Get CSV path from env or use default
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'w', encoding='utf-8') as f:
             pass  # This will clear the file

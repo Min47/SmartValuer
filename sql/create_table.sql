@@ -1,22 +1,23 @@
-CREATE TABLE IF NOT EXISTS listings (
+CREATE TABLE IF NOT EXISTS properties (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-	listing_id VARCHAR(255) NOT NULL,
+	property_id VARCHAR(255) NOT NULL,
 	title VARCHAR(255) NOT NULL,
 	address VARCHAR(255),
-	listing_url TEXT NOT NULL,
+	property_url TEXT NOT NULL,
 	availability TEXT DEFAULT NULL,
 	project_year INT DEFAULT NULL,
 	closest_mrt VARCHAR(255) DEFAULT NULL,
 	distance_to_closest_mrt INT DEFAULT NULL,
-	is_verified_listing BOOLEAN DEFAULT NULL,
+	is_verified_property BOOLEAN DEFAULT NULL,
 	is_everyone_welcomed BOOLEAN DEFAULT NULL,
 	listed_date DATE DEFAULT NULL,
 	agent_name VARCHAR(255),
 	agent_rating FLOAT DEFAULT NULL,
-	listing_type ENUM('Buy', 'Rent') NOT NULL,
+	property_type ENUM('Buy', 'Rent') NOT NULL,
 	unit_type ENUM('Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4 Bedroom', '5+ Bedroom') NOT NULL,
 	selling_price DECIMAL(12,2) DEFAULT NULL,
 	selling_price_text VARCHAR(255) DEFAULT NULL,
+	details_fetched BOOLEAN NOT NULL DEFAULT FALSE,
 	description TEXT DEFAULT NULL,
 	property_type ENUM('condo', 'landed', 'HDB') DEFAULT NULL,
 	property_type_text VARCHAR(255) DEFAULT NULL,
@@ -32,5 +33,5 @@ CREATE TABLE IF NOT EXISTS listings (
 	updated_at TIMESTAMP NULL DEFAULT NULL,
 	updated_fields TEXT DEFAULT NULL,
 	updated_old_values TEXT DEFAULT NULL,
-	UNIQUE KEY unique_listing (listing_id, listing_type, unit_type)
+	UNIQUE KEY unique_property (property_id, property_type, unit_type)
 );

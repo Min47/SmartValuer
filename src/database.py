@@ -87,28 +87,28 @@ def create_table_if_not_exists(sql_file_path, db_config):
         connection.close()
 
 # --- SQLAlchemy Models (One class = One table)---
-class Listings(Base):
-    __tablename__ = "listings"
+class Properties(Base):
+    __tablename__ = "properties"
     __table_args__ = (
         # Composite unique constraint
-        UniqueConstraint('listing_id', 'listing_type', 'unit_type', name='unique_listing'),
+        UniqueConstraint('property_id', 'property_type', 'unit_type', name='unique_property'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    listing_id = Column(String(255), nullable=False)
+    property_id = Column(String(255), nullable=False)
     title = Column(String(255), nullable=False)
     address = Column(String(255))
-    listing_url = Column(Text, nullable=False)
+    property_url = Column(Text, nullable=False)
     availability = Column(Text, default=None)
     project_year = Column(Integer, default=None)
     closest_mrt = Column(String(255), default=None)
     distance_to_closest_mrt = Column(Integer, default=None)
-    is_verified_listing = Column(Boolean, default=None)
+    is_verified_property = Column(Boolean, default=None)
     is_everyone_welcomed = Column(Boolean, default=None)
     listed_date = Column(Date, default=None)
     agent_name = Column(String(255))
     agent_rating = Column(Float, default=None)
-    listing_type = Column(Enum("Buy", "Rent", name="listing_type_enum"), nullable=False)
+    property_type = Column(Enum("Buy", "Rent", name="property_type_enum"), nullable=False)
     unit_type = Column(Enum(
         "Room", "Studio", "1 Bedroom", "2 Bedroom", "3 Bedroom", "4 Bedroom", "5+ Bedroom",
         name="unit_type_enum"
@@ -117,6 +117,7 @@ class Listings(Base):
     selling_price_text = Column(String(255), default=None)
 
     # Property Details
+    details_fetched = Column(Boolean, nullable=False, default=False)
     description = Column(Text, default=None)
     property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), default=None)
     property_type_text = Column(String(255), default=None)
@@ -140,21 +141,21 @@ class Listings(Base):
             setattr(self, key, value)
 
     def __repr__(self):
-        return f"<Listing(id={self.id}, title={self.title}, address={self.address}>"
+        return f"<Property(id={self.id}, title={self.title}, address={self.address}>"
 
     def validate(self):
-        if not self.listing_id:
-            raise ValueError("listing_id cannot be empty.")
+        if not self.property_id:
+            raise ValueError("property_id cannot be empty.")
         if not self.title:
             raise ValueError("title cannot be empty.")
-        if not self.listing_url:
-            raise ValueError("listing_url cannot be empty.")
+        if not self.property_url:
+            raise ValueError("property_url cannot be empty.")
         if not self.agent_name:
             raise ValueError("agent_name cannot be empty.")
         if not self.property_type:
             raise ValueError("property_type cannot be empty.")
-        if not self.listing_type:
-            raise ValueError("listing_type cannot be empty.")
+        if not self.property_type:
+            raise ValueError("property_type cannot be empty.")
         if not self.unit_type:
             raise ValueError("unit_type cannot be empty.")
         if self.agent_rating is not None and (self.agent_rating < 0 or self.agent_rating > 5):
@@ -181,8 +182,8 @@ class Listings(Base):
             raise ValueError("created_at must be a date object.")
         if self.availability is not None and not isinstance(self.availability, str):
             raise ValueError("availability must be a string.")
-        if self.is_verified_listing is not None and not isinstance(self.is_verified_listing, bool):
-            raise ValueError("is_verified_listing must be a boolean.")
+        if self.is_verified_property is not None and not isinstance(self.is_verified_property, bool):
+            raise ValueError("is_verified_property must be a boolean.")
         if self.is_everyone_welcomed is not None and not isinstance(self.is_everyone_welcomed, bool):
             raise ValueError("is_everyone_welcomed must be a boolean.")
 
@@ -193,8 +194,8 @@ class Listings(Base):
         try:
             # 1. Try to fetch the existing row by unique key
             existing = new_session.query(cls).filter_by(
-                listing_id=kwargs.get("listing_id"),
-                listing_type=kwargs.get("listing_type"),
+                property_id=kwargs.get("property_id"),
+                property_type=kwargs.get("property_type"),
                 unit_type=kwargs.get("unit_type")
             ).first()
     
@@ -224,24 +225,24 @@ class Listings(Base):
                     existing.updated_fields = " || ".join(changed_cols)
                     existing.updated_old_values = " || ".join(old_vals)
                     new_session.commit()
-                    print(f"> Update | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
+                    print(f"> Update | ID: {kwargs.get('property_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                     return "update"
                 else:
-                    print(f"> Ignore | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')} ")
+                    print(f"> Ignore | ID: {kwargs.get('property_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')} ")
                     return "ignore"
             else:
-                # Ensure decimal fields are Decimal before creating new listing
+                # Ensure decimal fields are Decimal before creating new row
                 for col in ["selling_price", "psf_floor", "psf_land"]:
                     if col in kwargs and kwargs.get(col) is not None:
                         kwargs[col] = Decimal(str(kwargs[col]))
                 new_listing = cls(**kwargs)
                 new_session.add(new_listing)
                 new_session.commit()
-                print(f"> Insert | ID: {kwargs.get('listing_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
+                print(f"> Insert | ID: {kwargs.get('property_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                 return "insert"
         except IntegrityError as e:
             new_session.rollback()
-            print(f"> Error: Could Not Upsert Listing. Reason: {e.orig}\n")
+            print(f"> Error: Could Not Upsert Row. Reason: {e.orig}\n")
         finally:
             new_session.close()
 
@@ -279,19 +280,19 @@ class Listings(Base):
             print(f"> Error: Batch Upsert Failed. Reason: {e}\n")
 
     @classmethod
-    def delete_listing(cls, listing_id):
+    def delete_listing(cls, property_id):
         # Always use the global Session factory to create a new session
         new_session = Session()
-        print(f"= Deleting Listing with ID: {listing_id}")
+        print(f"= Deleting Listing with ID: {property_id}")
 
         try:
-            listing = new_session.query(cls).filter_by(listing_id=listing_id).first()
+            listing = new_session.query(cls).filter_by(property_id=property_id).first()
             if listing:
                 new_session.delete(listing)
                 new_session.commit()
-                print(f"> Listing with listing_id {listing_id} deleted successfully!")
+                print(f"> Listing with property_id {property_id} deleted successfully!")
             else:
-                print(f"> No listing found with listing_id {listing_id}.")
+                print(f"> No listing found with property_id {property_id}.")
             print("")
         except Exception as e:
             new_session.rollback()

@@ -1,5 +1,5 @@
 # src/scraper/scraper_utils.py
-from database import Listings
+from database import Properties
 from datetime import datetime
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
@@ -16,7 +16,7 @@ class ScraperUtils:
         self.mode = mode
         self.unit_type = unit_type
         self.cur_page_listings = []
-        self.all_listings = []
+        self.all_properties = []
 
     def scrape_listings(self, desired_pages=None):
         cur_page = 1
@@ -92,11 +92,11 @@ class ScraperUtils:
                     # Extract the listing information from the cards
                     listings_info = ListingsInfo(cards, self.mode, self.unit_type)
                     self.cur_page_listings = listings_info.cur_page_listings
-                    self.all_listings.extend(self.cur_page_listings)
+                    self.all_properties.extend(self.cur_page_listings)
 
                     # Database #
                     # Save the listings to the database
-                    self.save_to_db(self.session)
+                    self.save_to_db_listings(self.session)
                     print("")
 
                     # Pagination #
@@ -153,17 +153,24 @@ class ScraperUtils:
         # Land Size (sqft)
         # PSF Floor
         # PSF Land
+
+        # Query the database for listings that need details
+        listings = self.session.query(Properties).filter_by(details_fetched=False).all()
+
+        # # After scraping details for a property
+        # property.details_fetched = True
+        # self.session.commit()
         pass
 
-    # Use all listings to save to CSV
-    def save_to_csv(self, filename="data/listings.csv"):
+    # Use all properties to save to CSV
+    def save_to_csv(self, filename="data/properties.csv"):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        if not self.all_listings:
-            print("= No listings to save.")
+        if not self.all_properties:
+            print("= No properties to save.")
             return
     
-        # Dynamically detect fieldnames from the first listing
-        fieldnames = self.all_listings[0].keys()
+        # Dynamically detect fieldnames from the first property
+        fieldnames = self.all_properties[0].keys()
         file_exists = os.path.isfile(filename)
         write_header = not file_exists or os.path.getsize(filename) == 0
     
@@ -171,14 +178,14 @@ class ScraperUtils:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             if write_header:
                 writer.writeheader()
-            writer.writerows(self.all_listings)
-        # print(f"= Saved {len(self.all_listings)} Listings to {filename}")
+            writer.writerows(self.all_properties)
+        # print(f"= Saved {len(self.all_properties)} Properties to {filename}")
 
     # Use current page listings to save to DB, since the listings will be saved per page
-    def save_to_db(self, session):
+    def save_to_db_listings(self, session):
         # Save the listings to the database
         try:
-            Listings.batch_upsert_listings(session, self.cur_page_listings)
+            Properties.batch_upsert_listings(session, self.cur_page_listings)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
@@ -194,20 +201,20 @@ class ListingsInfo:
         # List of (field_name, method_name) pairs
         fields = [
             # ("outer_html", "get_outer_html"),
-            ("listing_id", "get_listing_id"),
+            ("property_id", "get_property_id"),
             ("title", "get_title"),
             ("address", "get_address"),
-            ("listing_url", "get_listing_url"),
+            ("property_url", "get_property_url"),
             ("availability", "get_availability"),
             ("project_year", "get_project_year"),
             ("closest_mrt", "get_closest_mrt"),
             ("distance_to_closest_mrt", "get_distance_to_closest_mrt"),
-            ("is_verified_listing", "get_is_verified_listing"),
+            ("is_verified_property", "get_is_verified_property"),
             ("is_everyone_welcomed", "get_is_everyone_welcomed"),
             ("listed_date", "get_listed_date"),
             ("agent_name", "get_agent_name"),
             ("agent_rating", "get_agent_rating"),
-            ("listing_type", "get_listing_type"),
+            ("property_type", "get_property_type"),
             ("unit_type", "get_unit_type"),
             ("selling_price", "get_selling_price"),
             ("selling_price_text", "get_selling_price_text"),
@@ -221,8 +228,8 @@ class ListingsInfo:
 
                 # # Call the method dynamically
                 for field, method in fields:
-                    if field in ["listing_type", "unit_type"]:
-                        # For listing_type and unit_type, use the class attributes
+                    if field in ["property_type", "unit_type"]:
+                        # For property_type and unit_type, use the class attributes
                         listing[field] = getattr(self, method)()
                     else:
                         # For other fields, call the respective method
@@ -233,9 +240,9 @@ class ListingsInfo:
                     print("= Card Info:")
                     printed = set()
                     for field, method in fields:
-                        if field in ["listing_id", "listing_url"] and "listing_id_url" not in printed:
-                            print(f"> Listing ID: {listing['listing_id']} | URL: {listing['listing_url']}")
-                            printed.add("listing_id_url")
+                        if field in ["property_id", "property_url"] and "property_id_url" not in printed:
+                            print(f"> Property ID: {listing['property_id']} | URL: {listing['property_url']}")
+                            printed.add("property_id_url")
                         elif field in ["closest_mrt", "distance_to_closest_mrt"] and "closest_mrt" not in printed:
                             print(f"> Closest MRT: {listing['closest_mrt']} ({listing['distance_to_closest_mrt']} m)")
                             printed.add("closest_mrt")
@@ -249,7 +256,7 @@ class ListingsInfo:
                                 print(f"> Selling Price: {listing['selling_price']} ({listing['selling_price_text']})")
                             printed.add("selling_price")
                         elif field not in [
-                            "listing_id", "listing_url",
+                            "property_id", "property_url",
                             "closest_mrt", "distance_to_closest_mrt",
                             "agent_name", "agent_rating",
                             "selling_price", "selling_price_text"
@@ -272,14 +279,14 @@ class ListingsInfo:
         finally:
             return outer_html
     
-    def get_listing_id(self, card):
+    def get_property_id(self, card):
         try:
-            listing_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
-            listing_id = listing_id_element.get_attribute('data-listing-id')
+            property_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
+            property_id = property_id_element.get_attribute('data-listing-id')
         except NoSuchElementException:
-            listing_id = None
+            property_id = None
         finally:
-            return listing_id
+            return property_id
         
     def get_title(self, card):
         try:
@@ -297,13 +304,13 @@ class ListingsInfo:
         finally:
             return address
         
-    def get_listing_url(self, card):
+    def get_property_url(self, card):
         try:
-            listing_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
+            property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
         except NoSuchElementException:
-            listing_url = None
+            property_url = None
         finally:
-            return listing_url
+            return property_url
         
     def get_availability(self, card):
         try:
@@ -359,14 +366,14 @@ class ListingsInfo:
         finally:
             return distance_to_closest_mrt
         
-    def get_is_verified_listing(self, card):
+    def get_is_verified_property(self, card):
         try:
             verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]')
-            is_verified_listing = True if verified_element else False
+            is_verified_property = True if verified_element else False
         except NoSuchElementException:
-            is_verified_listing = False
+            is_verified_property = False
         finally:
-            return is_verified_listing
+            return is_verified_property
         
     def get_is_everyone_welcomed(self, card):
         try:
@@ -412,8 +419,8 @@ class ListingsInfo:
         finally:
             return agent_rating
         
-    def get_listing_type(self):
-        return self.mode  # Return the mode (Rent or Buy) as the listing type
+    def get_property_type(self):
+        return self.mode  # Return the mode (Rent or Buy) as the property type
     
     def get_unit_type(self):
         if self.unit_type == -1:
