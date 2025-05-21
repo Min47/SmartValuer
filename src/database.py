@@ -128,6 +128,8 @@ class Listings(Base):
     land_size_sqft = Column(Integer, default=None)
     psf_floor = Column(DECIMAL(12, 2), default=None)
     psf_land = Column(DECIMAL(12, 2), default=None)
+
+    # Default values
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP, nullable=True, default=None)
     updated_fields = Column(Text, default=None)  # Names of columns updated, separated by " || "
