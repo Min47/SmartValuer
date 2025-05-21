@@ -6,7 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 import csv
 import os
+import random
 import re
+import time
 
 class ScraperUtils:
     def __init__(self, session, mode, unit_type):
@@ -132,6 +134,7 @@ class ScraperUtils:
 
                     # Increment the page number
                     cur_page += 1
+                    time.sleep(random.uniform(2, 5))  # Sleep for a random time between 2 to 5 seconds
                     print("")
                 except Exception as e:
                     print(f"❌ Error on Page {cur_page}: {e}")
