@@ -17,6 +17,7 @@ class ScraperUtils:
         self.unit_type = unit_type
         self.cur_page_listings = []
         self.all_properties = []
+        self.cur_details = {}
 
     def scrape_listings(self, desired_pages=None):
         cur_page = 1
@@ -143,7 +144,7 @@ class ScraperUtils:
                     break
 
     def scrape_details(self, max_scrape=5):
-        # Query the database for properties that need details
+        # Database Query #
         properties_pending = self.session.query(Properties).filter_by(details_fetched=False).all()
         properties_pending_limited = properties_pending[:max_scrape] if max_scrape > 0 else properties_pending
         properties = properties_pending_limited if max_scrape > 0 else properties_pending
@@ -163,81 +164,74 @@ class ScraperUtils:
         if not properties:
             return
         
-        print("1111")
-        
-        # print(f"= Scraping details for up to {max_scrape} properties...")
-        # with SB(uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:
-        #     for idx, prop in enumerate(properties, 1):
-        #         try:
-        #             print(f"\n[{idx}/{len(properties)}] Scraping details for: {prop.property_url}")
-        #             sb.uc_open_with_reconnect(prop.property_url, 4)
-        #             sb.uc_gui_click_captcha()
-        #             sb.sleep(2)
+        # Run the scraper with a context manager
+        with SB(uc=True, xvfb=True, locale="en", uc_cdp_events=True) as sb:
+            for idx, prop in enumerate(properties, 1):
+                try:
+                    print(f"= [{idx}/{len(properties)}] ID: {prop.property_id} | Title: {prop.title} | URL: {prop.property_url}")
+                    sb.uc_open_with_reconnect(prop.property_url, 4)
+                    sb.uc_gui_click_captcha()
+                    sb.sleep(2)
 
-        #             # --- Scrape details here ---
-        #             # Example: description = sb.find_element(...).text
-        #             # Fill in your scraping logic and assign to variables
-        #             # Info:
-        #             # Description
-        #             # Property Type
-        #             # Property Type Text
-        #             # Ownership Type
-        #             # Ownership Type Text
-        #             # Bedroom Count
-        #             # Bathroom Count
-        #             # Floor Size (sqft)
-        #             # Land Size (sqft)
-        #             # PSF Floor
-        #             # PSF Land
+                    # Save the HTML content to a file for debugging (optional)
+                    with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
+                        f.write(sb.get_page_source())
 
-        #             # Example stub (replace with real scraping):
-        #             description = "Scraped description"
-        #             property_type = "condo"
-        #             property_type_text = "Condominium"
-        #             ownership_type = "freehold"
-        #             ownership_type_text = "Freehold"
-        #             bedroom_count = 3
-        #             bathroom_count = 2
-        #             floor_size_sqft = 1200
-        #             land_size_sqft = None
-        #             psf_floor = None
-        #             psf_land = None
+                    # Details Info #
+                    # Scrape the details from the page
+                    details_info = DetailsInfo(sb)
+                    self.cur_details = details_info.details
 
-        #             # # Save to DB
-        #             # self.save_to_db_details(
-        #             #     prop,
-        #             #     description=description,
-        #             #     property_type=property_type,
-        #             #     property_type_text=property_type_text,
-        #             #     ownership_type=ownership_type,
-        #             #     ownership_type_text=ownership_type_text,
-        #             #     bedroom_count=bedroom_count,
-        #             #     bathroom_count=bathroom_count,
-        #             #     floor_size_sqft=floor_size_sqft,
-        #             #     land_size_sqft=land_size_sqft,
-        #             #     psf_floor=psf_floor,
-        #             #     psf_land=psf_land
-        #             # )
+                    # --- Scrape details here ---
+                    # Example: description = sb.find_element(...).text
+                    # Fill in your scraping logic and assign to variables
+                    # Info:
+                    # Description
+                    # Property Type
+                    # Property Type Text
+                    # Ownership Type
+                    # Ownership Type Text
+                    # Bedroom Count
+                    # Bathroom Count
+                    # Floor Size (sqft)
+                    # Land Size (sqft)
+                    # PSF Floor
+                    # PSF Land
 
-        #             # Mark as fetched and commit
-        #             prop.details_fetched = True
-        #             self.session.commit()
-        #             print("> Details updated in DB.")
+                    # # Save to DB
+                    # self.save_to_db_details(
+                    #     prop,
+                    #     description=description,
+                    #     property_type=property_type,
+                    #     property_type_text=property_type_text,
+                    #     ownership_type=ownership_type,
+                    #     ownership_type_text=ownership_type_text,
+                    #     bedroom_count=bedroom_count,
+                    #     bathroom_count=bathroom_count,
+                    #     floor_size_sqft=floor_size_sqft,
+                    #     land_size_sqft=land_size_sqft,
+                    #     psf_floor=psf_floor,
+                    #     psf_land=psf_land
+                    # )
 
-        #             # Sleep to avoid blocking
-        #             sleep_time = random.uniform(2, 5)
-        #             print(f"> Sleeping for {sleep_time:.2f} seconds...")
-        #             time.sleep(sleep_time)
+                    # # Mark as fetched and commit
+                    # prop.details_fetched = True
+                    # self.session.commit()
+                    # print("> Details updated in DB.")
 
-        #         except Exception as e:
-        #             print(f"❌ Error scraping details for {prop.property_url}: {e}")
-        #             self.session.rollback()
-        #             continue
+                    # # Sleep to avoid blocking
+                    # sleep_time = random.uniform(2, 5)
+                    # print(f"> Sleeping for {sleep_time:.2f} seconds...")
+                    # time.sleep(sleep_time)
 
-        # # # After scraping details for a property
-        # # property.details_fetched = True
-        # # self.session.commit()
-        # pass
+                except Exception as e:
+                    print(f"❌ Error scraping details for {prop.property_url}: {e}")
+                    self.session.rollback()
+                    continue
+
+        # # After scraping details for a property
+        # property.details_fetched = True
+        # self.session.commit()
 
     # Use all properties to save to CSV
     def save_to_csv(self, filename="data/properties.csv"):
@@ -266,12 +260,12 @@ class ScraperUtils:
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
-    # def save_to_db_details(self, prop, **details):
-    #     """
-    #     Update the given property row with scraped details.
-    #     """
-    #     for key, value in details.items():
-    #         setattr(prop, key, value)
+    def save_to_db_details(self, session):
+        # Save the details to the database
+        try:
+            Properties.update_details(session, self.cur_details)
+        except Exception as e:
+            print(f"❌ Error Saving to DB: {e}")
 
 class ListingsInfo:
     def __init__(self, cards, mode, unit_type):
@@ -540,3 +534,122 @@ class ListingsInfo:
             selling_price_text = None
         finally:
             return selling_price_text
+        
+class DetailsInfo:
+    def __init__(self, sb):
+        self.sb = sb
+        self.print_output = True
+        self.details = {}
+        self.extract_details()
+
+    def extract_details(self):
+        fields = [
+            ("description", "get_description"),
+            ("property_type", "get_property_type"),
+            ("property_type_text", "get_property_type_text"),
+            # ("ownership_type", "get_ownership_type"),
+            # ("ownership_type_text", "get_ownership_type_text"),
+            # ("bedroom_count", "get_bedroom_count"),
+            # ("bathroom_count", "get_bathroom_count"),
+            # ("floor_size_sqft", "get_floor_size_sqft"),
+            # ("land_size_sqft", "get_land_size_sqft"),
+            # ("psf_floor", "get_psf_floor"),
+            # ("psf_land", "get_psf_land")
+        ]
+
+        # Extract the details from URL
+        try:
+            # Listing dictionary to store the extracted information
+            details = {}
+
+            # Call the method dynamically
+            for field, method in fields:
+                details[field] = getattr(self, method)()
+
+            # Print the extracted information for debugging
+            if self.print_output:
+                print("= Details Info:")
+                printed = set()
+                for field, method in fields:
+                    # Description
+                    if field == "description" and "description" not in printed:
+                        desc_val = details['description']
+                        if desc_val:
+                            desc_val = desc_val.replace('\n', ' ')
+                            if len(desc_val) > 100:
+                                shortened_desc = f"{desc_val[:50]}...{desc_val[-50:]}"
+                                print(f"> Description: {shortened_desc}")
+                            else:
+                                print(f"> Description: {desc_val}")
+                        else:
+                            print("> Description: None")
+                        printed.add("description")
+                    # Property Type, Property Type Text
+                    elif field in ["property_type", "property_type_text"] and "property_type" not in printed:
+                        print(f"> Property Type: {details['property_type']} ({details['property_type_text']})")
+                        printed.add("property_type")
+                    # Ownership Type, Ownership Type Text
+                    elif field in ["ownership_type", "ownership_type_text"] and "ownership_type" not in printed:
+                        print(f"> Ownership Type: {details['ownership_type']} ({details['ownership_type_text']})")
+                        printed.add("ownership_type")
+                    # Elsewhere
+                    elif field not in [
+                        "property_type", "property_type_text",
+                        "ownership_type", "ownership_type_text"
+                    ]:
+                        display_name = field.replace("_", " ").title()
+                        print(f"> {display_name}: {details[field]}")
+                print("")
+
+            # Assign the extracted details to the instance variable
+            self.details = details
+
+        except Exception as e:
+            print(f"❌ Error on Details Info Extraction: {e}")
+            print("")
+
+    def get_description(self):
+        try:
+            # Try to get subtitle
+            try:
+                subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]').text
+            except NoSuchElementException:
+                subtitle = None
+
+            # Try to get main description
+            try:
+                description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]').text
+            except NoSuchElementException:
+                description = None
+
+            # Combine subtitle and description if present
+            if subtitle and description:
+                full_desc = f"{subtitle}\n{description}"
+            elif subtitle:
+                full_desc = subtitle
+            elif description:
+                full_desc = description
+            else:
+                full_desc = None
+
+        except Exception as e:
+            print(f"❌ Error extracting description: {e}")
+            full_desc = None
+        finally:
+            return full_desc
+        
+    def get_property_type(self):
+        try:
+            property_type = self.sb.find_element(By.XPATH, './/div[@class="property-type"]').text
+        except NoSuchElementException:
+            property_type = None
+        finally:
+            return property_type
+        
+    def get_property_type_text(self):
+        try:
+            property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-type"]').text
+        except NoSuchElementException:
+            property_type_text = None
+        finally:
+            return property_type_text
