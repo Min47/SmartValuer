@@ -543,34 +543,59 @@ class DetailsInfo:
         self.extract_details()
 
     def extract_details(self):
+        # List of details
         fields = [
-            ("description", "get_description"),
-            ("property_type", "get_property_type"),
-            ("property_type_text", "get_property_type_text"),
-            # ("ownership_type", "get_ownership_type"),
-            # ("ownership_type_text", "get_ownership_type_text"),
-            # ("bedroom_count", "get_bedroom_count"),
-            # ("bathroom_count", "get_bathroom_count"),
-            # ("floor_size_sqft", "get_floor_size_sqft"),
-            # ("land_size_sqft", "get_land_size_sqft"),
-            # ("psf_floor", "get_psf_floor"),
-            # ("psf_land", "get_psf_land")
+            "description", 
+            "property_type", "property_type_text", 
+            # "ownership_type", "ownership_type_text",
+            # "bedroom_count", "bathroom_count",
+            # "floor_size_sqft", "land_size_sqft",
+            # "psf_floor", "psf_land"
         ]
-
         # Extract the details from URL
         try:
             # Listing dictionary to store the extracted information
             details = {}
 
-            # Call the method dynamically
-            for field, method in fields:
-                details[field] = getattr(self, method)()
+            # Get the description
+            details['description'] = self.get_description()
+
+            # Click 'See All Details' button
+            try:
+                see_all_details_button = self.sb.find_element(By.XPATH, './/section[@class="details-section"]//button[@da-id="meta-table-see-more-btn"]')
+                self.sb.execute_script("arguments[0].scrollIntoView();", see_all_details_button)
+                self.sb.wait_for_element_visible(By.XPATH, './/section[@class="details-section"]//button[@da-id="meta-table-see-more-btn"]', timeout=5)
+                self.sb.execute_script("arguments[0].click();", see_all_details_button)
+                self.sb.sleep(2)
+
+                # Extract the details from the modal
+                details['property_type'] = self.get_property_type()
+                details['property_type_text'] = self.get_property_type_text()
+                # details['ownership_type'] = self.get_ownership_type()
+                # details['ownership_type_text'] = self.get_ownership_type_text()
+                # details['bedroom_count'] = self.get_bedroom_count()
+                # details['bathroom_count'] = self.get_bathroom_count()
+                # details['floor_size_sqft'] = self.get_floor_size_sqft()
+                # details['land_size_sqft'] = self.get_land_size_sqft()
+                # details['psf_floor'] = self.get_psf_floor()
+                # details['psf_land'] = self.get_psf_land()
+            except NoSuchElementException:
+                print("= 'See All Details' Button Not Found")
+            else:
+                # Close the modal
+                try:
+                    close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]')
+                    self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
+                    self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
+                    self.sb.execute_script("arguments[0].click();", close_button)
+                    self.sb.sleep(2)
+                except NoSuchElementException:
+                    print("= 'Close' Button Not Found")
 
             # Print the extracted information for debugging
             if self.print_output:
-                print("= Details Info:")
                 printed = set()
-                for field, method in fields:
+                for field in fields:
                     # Description
                     if field == "description" and "description" not in printed:
                         desc_val = details['description']
@@ -640,7 +665,26 @@ class DetailsInfo:
         
     def get_property_type(self):
         try:
-            property_type = self.sb.find_element(By.XPATH, './/div[@class="property-type"]').text
+            text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
+            # Extract the part before " for "
+            match = re.match(r"(.+?)\s+for\s+", text, re.IGNORECASE)
+            property_type_raw = match.group(1).strip() if match else text
+    
+            # Map to enum: Condo, Landed, HDB
+            lower = property_type_raw.lower()
+            hdb_keywords = ['HDB']
+            condo_keywords = ['Condominium', 'Apartment', 'Walk-up', 'Cluster House', 'Executive Condominium']
+            landed_keywords = ['Terraced House', 'Detached House', 'Semi-Detached House', 'Corner Terrace', 'Bungalow House', 'Good Class Bungalow', 'Shophouse', 'Land Only', 'Town House', 'Conservation House', 'Cluster House']
+            
+            # Check for keywords in the property type
+            if any(word.lower() in lower for word in hdb_keywords):
+                property_type = 'HDB'
+            elif any(word.lower() in lower for word in condo_keywords):
+                property_type = 'Condo'
+            elif any(word.lower() in lower for word in landed_keywords):
+                property_type = 'Landed'
+            else:
+                property_type = None
         except NoSuchElementException:
             property_type = None
         finally:
@@ -648,7 +692,8 @@ class DetailsInfo:
         
     def get_property_type_text(self):
         try:
-            property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-type"]').text
+            # Get the second child element of the parent (indexing in XPath starts at 1)
+            property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
         except NoSuchElementException:
             property_type_text = None
         finally:
