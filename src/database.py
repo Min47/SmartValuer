@@ -119,9 +119,9 @@ class Properties(Base):
     # Property Details
     details_fetched = Column(Boolean, nullable=False, default=False)
     description = Column(Text, default=None)
-    property_type = Column(Enum("condo", "landed", "HDB", name="property_type_enum"), default=None)
+    property_type = Column(Enum("Condo", "Landed", "HDB", name="property_type_enum"), default=None)
     property_type_text = Column(String(255), default=None)
-    ownership_type = Column(Enum("freehold", "leasehold", name="ownership_type_enum"), default=None)
+    ownership_type = Column(Enum("Freehold", "Leasehold", name="ownership_type_enum"), default=None)
     ownership_type_text = Column(String(255), default=None)
     bedroom_count = Column(Integer, default=None)
     bathroom_count = Column(Integer, default=None)
