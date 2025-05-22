@@ -10,9 +10,9 @@ class PropertyGuruInitialScraper:
                 raise ValueError("Invalid unit_type '-1' for mode 'Buy'. Please select a valid unit_type.")
 
             scraper = ScraperUtils(session=session, mode=mode, unit_type=unit_type)
-            scraper.scrape_listings(desired_pages=desired_pages)
+            # scraper.scrape_listings(desired_pages=desired_pages)
             scraper.scrape_details(max_scrape=5)
-            scraper.save_to_csv(filename=filename)
+            # scraper.save_to_csv(filename=filename)
             print("")
         except Exception as e:
             print(f"❌ Error on run_scraper: {e}")
