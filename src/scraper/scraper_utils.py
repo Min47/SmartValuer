@@ -182,22 +182,6 @@ class ScraperUtils:
                     details_info = DetailsInfo(sb)
                     self.cur_details = details_info.details
 
-                    # --- Scrape details here ---
-                    # Example: description = sb.find_element(...).text
-                    # Fill in your scraping logic and assign to variables
-                    # Info:
-                    # Description
-                    # Property Type
-                    # Property Type Text
-                    # Ownership Type
-                    # Ownership Type Text
-                    # Bedroom Count
-                    # Bathroom Count
-                    # Floor Size (sqft)
-                    # Land Size (sqft)
-                    # PSF Floor
-                    # PSF Land
-
                     # # Save to DB
                     # self.save_to_db_details(
                     #     prop,
@@ -547,10 +531,10 @@ class DetailsInfo:
         fields = [
             "description", 
             "property_type", "property_type_text", 
-            # "ownership_type", "ownership_type_text",
+            "ownership_type", "ownership_type_text",
             # "bedroom_count", "bathroom_count",
-            # "floor_size_sqft", "land_size_sqft",
-            # "psf_floor", "psf_land"
+            "floor_size_sqft", "land_size_sqft",
+            "psf_floor", "psf_land"
         ]
         # Extract the details from URL
         try:
@@ -569,16 +553,14 @@ class DetailsInfo:
                 self.sb.sleep(2)
 
                 # Extract the details from the modal
-                details['property_type'] = self.get_property_type()
-                details['property_type_text'] = self.get_property_type_text()
-                # details['ownership_type'] = self.get_ownership_type()
-                # details['ownership_type_text'] = self.get_ownership_type_text()
+                details['property_type'], details['property_type_text'] = self.get_property_type()
+                details['ownership_type'], details['ownership_type_text'] = self.get_ownership_type()
                 # details['bedroom_count'] = self.get_bedroom_count()
                 # details['bathroom_count'] = self.get_bathroom_count()
-                # details['floor_size_sqft'] = self.get_floor_size_sqft()
-                # details['land_size_sqft'] = self.get_land_size_sqft()
-                # details['psf_floor'] = self.get_psf_floor()
-                # details['psf_land'] = self.get_psf_land()
+                details['floor_size_sqft'] = self.get_floor_size_sqft()
+                details['land_size_sqft'] = self.get_land_size_sqft()
+                details['psf_floor'] = self.get_psf_floor()
+                details['psf_land'] = self.get_psf_land()
             except NoSuchElementException:
                 print("= 'See All Details' Button Not Found")
             else:
@@ -619,6 +601,7 @@ class DetailsInfo:
                         printed.add("ownership_type")
                     # Elsewhere
                     elif field not in [
+                        "description",
                         "property_type", "property_type_text",
                         "ownership_type", "ownership_type_text"
                     ]:
@@ -664,11 +647,13 @@ class DetailsInfo:
             return full_desc
         
     def get_property_type(self):
+        property_type = None
+        property_type_text = None
         try:
-            text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
+            property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
             # Extract the part before " for "
-            match = re.match(r"(.+?)\s+for\s+", text, re.IGNORECASE)
-            property_type_raw = match.group(1).strip() if match else text
+            match = re.match(r"(.+?)\s+for\s+", property_type_text, re.IGNORECASE)
+            property_type_raw = match.group(1).strip() if match else property_type_text
     
             # Map to enum: Condo, Landed, HDB
             lower = property_type_raw.lower()
@@ -686,15 +671,93 @@ class DetailsInfo:
             else:
                 property_type = None
         except NoSuchElementException:
-            property_type = None
+            pass
         finally:
-            return property_type
+            return property_type, property_type_text
         
-    def get_property_type_text(self):
+    def get_ownership_type(self):
+        ownership_type = None
+        ownership_type_text = None
         try:
-            # Get the second child element of the parent (indexing in XPath starts at 1)
-            property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
+            ownership_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]').text
+            lower = ownership_type_text.lower()
+            if 'lease' in lower:
+                ownership_type = 'Leasehold'
+            elif 'freehold' in lower:
+                ownership_type = 'Freehold'
+            else:
+                ownership_type = None
         except NoSuchElementException:
-            property_type_text = None
+            pass
         finally:
-            return property_type_text
+            return ownership_type, ownership_type_text
+        
+    def get_bedroom_count(self):
+        pass
+
+    def get_bathroom_count(self):
+        pass
+
+    def get_floor_size_sqft(self):
+        try:
+            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            floor_size_sqft = None
+            for el in elements:
+                text = el.text.lower()
+                match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*floor area', text)
+                if match:
+                    floor_size_sqft = float(match.group(1))
+                    break
+        except NoSuchElementException:
+            floor_size_sqft = None
+        finally:
+            return floor_size_sqft
+    
+    def get_land_size_sqft(self):
+        try:
+            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            land_size_sqft = None
+            for el in elements:
+                text = el.text.lower()
+                match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*land area', text)
+                if match:
+                    land_size_sqft = float(match.group(1))
+                    break
+        except NoSuchElementException:
+            land_size_sqft = None
+        finally:
+            return land_size_sqft
+    
+    def get_psf_floor(self):
+        try:
+            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            psf_floor = None
+            for el in elements:
+                text = el.text.lower()
+                # Match "S$ 10.89 psf" but not if "(land)" is present
+                if "psf" in text and "(land)" not in text:
+                    match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
+                    if match:
+                        psf_floor = float(match.group(1).replace(',', ''))
+                        break
+        except NoSuchElementException:
+            psf_floor = None
+        finally:
+            return psf_floor
+    
+    def get_psf_land(self):
+        try:
+            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            psf_land = None
+            for el in elements:
+                text = el.text.lower()
+                # Match "S$ 2,479.50 psf (land)"
+                if "psf" in text and "(land)" in text:
+                    match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
+                    if match:
+                        psf_land = float(match.group(1).replace(',', ''))
+                        break
+        except NoSuchElementException:
+            psf_land = None
+        finally:
+            return psf_land
