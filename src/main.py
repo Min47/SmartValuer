@@ -1,6 +1,7 @@
 # src/main.py
 from dotenv import dotenv_values
 from scraper.initial_full_scrape import PropertyGuruInitialScraper
+from scraper.scraper_utils import ScraperUtils
 from sqlalchemy import text
 import database
 import os
@@ -75,7 +76,7 @@ if __name__ == '__main__':
         print(f"> Database: {session.bind.url.database}")
         print("")
 
-        # # Testing purpose
+        # [Initial] Scraper Listings #
         modes = ["Rent", "Buy"]
         unit_types = [-1, 0, 5]
         for mode in modes:
@@ -85,17 +86,27 @@ if __name__ == '__main__':
                 # Create a new session for each run
                 session = database.Session()
                 try:
-                    PropertyGuruInitialScraper.run_scraper(
-                        mode=mode,
-                        unit_type=unit_type,
+                    scraper = ScraperUtils(session=session, mode=mode, unit_type=unit_type)
+                    PropertyGuruInitialScraper.run_scraper_listings(
+                        scraper=scraper,
                         desired_pages=2,
-                        session=session,
                         filename=filename
                     )
                 finally:
                     session.close()
                 # print("Sleeping for 30 seconds...")
                 time.sleep(30)  # Sleep for 30 second between different modes and unit types
+
+        # [Initial] Scraper Details #
+        session = database.Session()
+        try:
+            scraper = ScraperUtils(session=session, mode=None, unit_type=None)
+            PropertyGuruInitialScraper.run_scraper_details(
+                scraper=scraper,
+                filename=filename
+            )
+        finally:
+            session.close()
 
     except Exception as e:
         print(f"❌ Error on Main: {e}")
