@@ -65,10 +65,26 @@ if __name__ == '__main__':
         with open(filename, 'w', encoding='utf-8') as f:
             pass  # This will clear the file
 
-        # Initialize database with env/config and create session
+        # --- Initialize database with env/config and create session --- #
         database.init_db(db_config)
         session = database.Session()
         session.execute(text("SELECT 1"))
+
+        # --- Kill other MySQL sessions --- #
+        current_id = session.execute(text("SELECT CONNECTION_ID()")).scalar()
+        processes = session.execute(text("SELECT ID, USER FROM performance_schema.processlist")).fetchall()
+        for proc in processes:
+            pid = proc[0]
+            user = proc[1]
+            if pid != current_id and user == session.bind.url.username:
+                try:
+                    session.execute(text(f"KILL {pid}"))
+                    print(f"Killed Session: {pid} (User: {user})")
+                except Exception as e:
+                    print(f"Could Not Kill Session: {pid} (User: {user}) - {e}")
+        session.commit()
+
+        # --- Print database connection details --- #
         print("")
         print(f"> Host: {session.bind.url.host}")
         print(f"> Port: {session.bind.url.port}")
