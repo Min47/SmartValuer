@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 import os
 import pymysql
 import random
+import time
 
 # --- SQLAlchemy setup ---
 Base = declarative_base()
@@ -341,6 +342,7 @@ class Properties(Base):
             print(f"> ❌ Error: Could Not Update Details. Reason: {e}\n")
         finally:
             new_session.close()
+            time.sleep(random.uniform(0.5, 1.5))  # Sleep for a random time between 0.5 and 1.5 seconds
 
     @classmethod
     def delete_listing(cls, property_id):
