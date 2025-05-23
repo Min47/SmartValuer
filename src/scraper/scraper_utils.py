@@ -1,6 +1,7 @@
 # src/scraper/scraper_utils.py
 from database import Properties
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
@@ -487,7 +488,7 @@ class ListingsInfo:
             price = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
             # Extract the numeric part of the price
             price_value = re.sub(r"[^\d.]", "", price)
-            selling_price = float(price_value) if price_value else None
+            selling_price = Decimal(price_value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if price_value else None
         except NoSuchElementException:
             selling_price = None
         finally:
@@ -740,7 +741,7 @@ class DetailsInfo:
             if "psf" in text and "(land)" not in text:
                 match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
                 if match:
-                    psf_floor = float(match.group(1).replace(',', ''))
+                    psf_floor = Decimal(match.group(1).replace(',', '')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     break
         return psf_floor
     
@@ -753,6 +754,6 @@ class DetailsInfo:
             if "psf" in text and "(land)" in text:
                 match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
                 if match:
-                    psf_land = float(match.group(1).replace(',', ''))
+                    psf_land = Decimal(match.group(1).replace(',', '')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     break
         return psf_land

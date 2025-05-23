@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Date, Enum, Float, TIMESTAMP, text, UniqueConstraint, DECIMAL
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
@@ -218,7 +218,7 @@ class Properties(Base):
                     for col in changed_cols:
                         # Convert to Decimal for price fields
                         if col in ["selling_price", "psf_floor", "psf_land"] and kwargs[col] is not None:
-                            setattr(existing, col, Decimal(str(kwargs[col])))
+                            setattr(existing, col, Decimal(str(kwargs[col])).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
                         else:
                             setattr(existing, col, kwargs[col])
                     existing.updated_at = func.now()
@@ -235,7 +235,7 @@ class Properties(Base):
                 # Ensure decimal fields are Decimal before creating new row
                 for col in ["selling_price", "psf_floor", "psf_land"]:
                     if col in kwargs and kwargs.get(col) is not None:
-                        kwargs[col] = Decimal(str(kwargs[col]))
+                        kwargs[col] = Decimal(str(kwargs[col])).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 new_listing = cls(**kwargs)
                 new_session.add(new_listing)
                 new_session.commit()
