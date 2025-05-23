@@ -79,9 +79,10 @@ if __name__ == '__main__':
             if pid != current_id and user == session.bind.url.username:
                 try:
                     session.execute(text(f"KILL {pid}"))
-                    print(f"Killed Session: {pid} (User: {user})")
+                    # print(f"Killed Session: {pid} (User: {user})")
                 except Exception as e:
-                    print(f"Could Not Kill Session: {pid} (User: {user}) - {e}")
+                    # print(f"Could Not Kill Session: {pid} (User: {user}) - {e}")
+                    pass
         session.commit()
 
         # --- Print database connection details --- #
