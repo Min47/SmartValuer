@@ -183,20 +183,7 @@ class ScraperUtils:
                     self.cur_details = details_info.details
 
                     # # Save to DB
-                    # self.save_to_db_details(
-                    #     prop,
-                    #     description=description,
-                    #     property_type=property_type,
-                    #     property_type_text=property_type_text,
-                    #     ownership_type=ownership_type,
-                    #     ownership_type_text=ownership_type_text,
-                    #     bedroom_count=bedroom_count,
-                    #     bathroom_count=bathroom_count,
-                    #     floor_size_sqft=floor_size_sqft,
-                    #     land_size_sqft=land_size_sqft,
-                    #     psf_floor=psf_floor,
-                    #     psf_land=psf_land
-                    # )
+                    # self.save_to_db_details(self.session)
 
                     # # Mark as fetched and commit
                     # prop.details_fetched = True
@@ -543,6 +530,10 @@ class DetailsInfo:
 
             # Get the description
             details['description'] = self.get_description()
+            # Get the bedroom count
+            details['bedroom_count'] = self.get_bedroom_count()
+            # Get the bathroom count
+            details['bathroom_count'] = self.get_bathroom_count()
 
             # Click 'See All Details' button
             try:
@@ -555,8 +546,6 @@ class DetailsInfo:
                 # Extract the details from the modal
                 details['property_type'], details['property_type_text'] = self.get_property_type()
                 details['ownership_type'], details['ownership_type_text'] = self.get_ownership_type()
-                details['bedroom_count'] = self.get_bedroom_count()
-                details['bathroom_count'] = self.get_bathroom_count()
                 details['floor_size_sqft'] = self.get_floor_size_sqft()
                 details['land_size_sqft'] = self.get_land_size_sqft()
                 details['psf_floor'] = self.get_psf_floor()
@@ -695,13 +684,15 @@ class DetailsInfo:
     def get_bedroom_count(self):
         bedroom_count = None
         try:
-            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]/span/img[@alt="Beds"]/../../div/p')
-            text = bed_number_element.text
-            match = re.search(r'(\d+)', text)
-            if match:
-                bedroom_count = int(match.group(1))
+            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[@alt="Beds"]//..//..//div//p')
+            text = bed_number_element.text.strip()
+            if text.isdigit():
+                bedroom_count = int(text)
             else:
-                bedroom_count = None
+                # fallback to regex in case there is extra text
+                match = re.search(r'(\d+)', text)
+                if match:
+                    bedroom_count = int(match.group(1))
         except NoSuchElementException:
             pass
         finally:
@@ -710,13 +701,15 @@ class DetailsInfo:
     def get_bathroom_count(self):
         bathroom_count = None
         try:
-            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]/span/img[@alt="Baths"]/../../div/p')
-            text = bath_number_element.text
-            match = re.search(r'(\d+)', text)
-            if match:
-                bathroom_count = int(match.group(1))
+            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[@alt="Baths"]//..//..//div//p')
+            text = bath_number_element.text.strip()
+            if text.isdigit():
+                bathroom_count = int(text)
             else:
-                bathroom_count = None
+                # fallback to regex in case there is extra text
+                match = re.search(r'(\d+)', text)
+                if match:
+                    bathroom_count = int(match.group(1))
         except NoSuchElementException:
             pass
         finally:
