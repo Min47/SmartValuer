@@ -532,7 +532,7 @@ class DetailsInfo:
             "description", 
             "property_type", "property_type_text", 
             "ownership_type", "ownership_type_text",
-            # "bedroom_count", "bathroom_count",
+            "bedroom_count", "bathroom_count",
             "floor_size_sqft", "land_size_sqft",
             "psf_floor", "psf_land"
         ]
@@ -555,14 +555,14 @@ class DetailsInfo:
                 # Extract the details from the modal
                 details['property_type'], details['property_type_text'] = self.get_property_type()
                 details['ownership_type'], details['ownership_type_text'] = self.get_ownership_type()
-                # details['bedroom_count'] = self.get_bedroom_count()
-                # details['bathroom_count'] = self.get_bathroom_count()
+                details['bedroom_count'] = self.get_bedroom_count()
+                details['bathroom_count'] = self.get_bathroom_count()
                 details['floor_size_sqft'] = self.get_floor_size_sqft()
                 details['land_size_sqft'] = self.get_land_size_sqft()
                 details['psf_floor'] = self.get_psf_floor()
                 details['psf_land'] = self.get_psf_land()
             except NoSuchElementException:
-                print("= 'See All Details' Button Not Found")
+                print("> 'See All Details' Button Not Found")
             else:
                 # Close the modal
                 try:
@@ -572,7 +572,7 @@ class DetailsInfo:
                     self.sb.execute_script("arguments[0].click();", close_button)
                     self.sb.sleep(2)
                 except NoSuchElementException:
-                    print("= 'Close' Button Not Found")
+                    print("> 'Close' Button Not Found")
 
             # Print the extracted information for debugging
             if self.print_output:
@@ -693,10 +693,34 @@ class DetailsInfo:
             return ownership_type, ownership_type_text
         
     def get_bedroom_count(self):
-        pass
+        bedroom_count = None
+        try:
+            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]/span/img[@alt="Beds"]/../../div/p')
+            text = bed_number_element.text
+            match = re.search(r'(\d+)', text)
+            if match:
+                bedroom_count = int(match.group(1))
+            else:
+                bedroom_count = None
+        except NoSuchElementException:
+            pass
+        finally:
+            return bedroom_count
 
     def get_bathroom_count(self):
-        pass
+        bathroom_count = None
+        try:
+            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]/span/img[@alt="Baths"]/../../div/p')
+            text = bath_number_element.text
+            match = re.search(r'(\d+)', text)
+            if match:
+                bathroom_count = int(match.group(1))
+            else:
+                bathroom_count = None
+        except NoSuchElementException:
+            pass
+        finally:
+            return bathroom_count
 
     def get_floor_size_sqft(self):
         elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
