@@ -706,7 +706,7 @@ class DetailsInfo:
                 text = el.text.lower()
                 match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*floor area', text)
                 if match:
-                    floor_size_sqft = float(match.group(1))
+                    floor_size_sqft = int(round(float(match.group(1))))
                     break
         except NoSuchElementException:
             floor_size_sqft = None
@@ -721,7 +721,7 @@ class DetailsInfo:
                 text = el.text.lower()
                 match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*land area', text)
                 if match:
-                    land_size_sqft = float(match.group(1))
+                    land_size_sqft = int(round(float(match.group(1))))
                     break
         except NoSuchElementException:
             land_size_sqft = None
