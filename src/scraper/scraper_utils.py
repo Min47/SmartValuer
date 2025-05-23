@@ -699,65 +699,49 @@ class DetailsInfo:
         pass
 
     def get_floor_size_sqft(self):
-        try:
-            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
-            floor_size_sqft = None
-            for el in elements:
-                text = el.text.lower()
-                match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*floor area', text)
-                if match:
-                    floor_size_sqft = int(round(float(match.group(1))))
-                    break
-        except NoSuchElementException:
-            floor_size_sqft = None
-        finally:
-            return floor_size_sqft
+        elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+        floor_size_sqft = None
+        for el in elements:
+            text = el.text.lower()
+            match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*floor area', text)
+            if match:
+                floor_size_sqft = int(round(float(match.group(1))))
+                break
+        return floor_size_sqft
     
     def get_land_size_sqft(self):
-        try:
-            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
-            land_size_sqft = None
-            for el in elements:
-                text = el.text.lower()
-                match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*land area', text)
-                if match:
-                    land_size_sqft = int(round(float(match.group(1))))
-                    break
-        except NoSuchElementException:
-            land_size_sqft = None
-        finally:
-            return land_size_sqft
+        elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+        land_size_sqft = None
+        for el in elements:
+            text = el.text.lower()
+            match = re.search(r'(\d+(?:\.\d+)?)\s*sqft\s*land area', text)
+            if match:
+                land_size_sqft = int(round(float(match.group(1))))
+                break
+        return land_size_sqft
     
     def get_psf_floor(self):
-        try:
-            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
-            psf_floor = None
-            for el in elements:
-                text = el.text.lower()
-                # Match "S$ 10.89 psf" but not if "(land)" is present
-                if "psf" in text and "(land)" not in text:
-                    match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
-                    if match:
-                        psf_floor = float(match.group(1).replace(',', ''))
-                        break
-        except NoSuchElementException:
-            psf_floor = None
-        finally:
-            return psf_floor
+        elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+        psf_floor = None
+        for el in elements:
+            text = el.text.lower()
+            # Match "S$ 10.89 psf" but not if "(land)" is present
+            if "psf" in text and "(land)" not in text:
+                match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
+                if match:
+                    psf_floor = float(match.group(1).replace(',', ''))
+                    break
+        return psf_floor
     
     def get_psf_land(self):
-        try:
-            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
-            psf_land = None
-            for el in elements:
-                text = el.text.lower()
-                # Match "S$ 2,479.50 psf (land)"
-                if "psf" in text and "(land)" in text:
-                    match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
-                    if match:
-                        psf_land = float(match.group(1).replace(',', ''))
-                        break
-        except NoSuchElementException:
-            psf_land = None
-        finally:
-            return psf_land
+        elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+        psf_land = None
+        for el in elements:
+            text = el.text.lower()
+            # Match "S$ 2,479.50 psf (land)"
+            if "psf" in text and "(land)" in text:
+                match = re.search(r's\$[\s]*([\d,]+(?:\.\d+)?)\s*psf', text)
+                if match:
+                    psf_land = float(match.group(1).replace(',', ''))
+                    break
+        return psf_land
