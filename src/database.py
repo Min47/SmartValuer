@@ -224,6 +224,7 @@ class Properties(Base):
                     existing.updated_at = func.now()
                     existing.updated_fields = " || ".join(changed_cols)
                     existing.updated_old_values = " || ".join(old_vals)
+                    existing.details_fetched = False
                     new_session.commit()
                     print(f"> Update | ID: {kwargs.get('property_id', 'Unknown')}, Title: {kwargs.get('title', 'Unknown')}")
                     return "update"
@@ -278,6 +279,68 @@ class Properties(Base):
         except Exception as e:
             session.rollback()
             print(f"> Error: Batch Upsert Failed. Reason: {e}\n")
+
+    @classmethod
+    def update_details(cls, detail, DETAIL_COLUMNS):
+        # Always use the global Session factory to create a new session
+        new_session = Session()
+        try:
+            existing = new_session.query(cls).filter_by(
+                property_id=detail.get("property_id"),
+                property_selling_type=detail.get("property_selling_type"),
+                unit_type=detail.get("unit_type")
+            ).first()
+
+            # Check if the property exists
+            if not existing:
+                print(f"> ❌ Error | Property Not Found")
+                new_session.close()
+                return
+    
+            # Check if any of the detail columns have changed
+            changed = False
+            changed_cols = []
+            old_vals = []
+
+            # Check if all detail columns are blank
+            is_blank = all(getattr(existing, col) is None for col in DETAIL_COLUMNS)
+    
+            # Check if any detail columns have changed and update them
+            for col in DETAIL_COLUMNS:
+                new_val = detail.get(col)
+                old_val = getattr(existing, col)
+                if new_val != old_val:
+                    changed = True
+                    changed_cols.append(col)
+                    old_vals.append("" if old_val is None else str(old_val))
+                    setattr(existing, col, new_val)
+
+            if is_blank:
+                # 1) New row, just update details columns, updated_at, updated_fields, updated_old_values=null
+                existing.updated_at = func.now()
+                existing.updated_fields = "Details Fields"
+                existing.updated_old_values = None
+                existing.details_fetched = True
+                new_session.commit()
+                print(f"> Database | Inserted")
+            elif changed:
+                # 2a) Details columns changed, update details, updated_at, updated_fields, updated_old_values, details_fetched
+                existing.updated_at = func.now()
+                existing.updated_fields = " || ".join(changed_cols)
+                existing.updated_old_values = " || ".join(old_vals)
+                existing.details_fetched = True
+                new_session.commit()
+                print(f"> Database | Updated")
+            else:
+                # 2b) No changes, just set details_fetched to True
+                existing.details_fetched = True
+                new_session.commit()
+                print(f"> Database | No Changes")
+        except Exception as e:
+            new_session.rollback()
+            print(f"> ❌ Error: Could Not Update Details. Reason: {e}\n")
+        finally:
+            new_session.close()
 
     @classmethod
     def delete_listing(cls, property_id):

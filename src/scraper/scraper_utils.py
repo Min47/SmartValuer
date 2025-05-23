@@ -173,36 +173,31 @@ class ScraperUtils:
                     sb.uc_gui_click_captcha()
                     sb.sleep(2)
 
-                    # Save the HTML content to a file for debugging (optional)
-                    with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
-                        f.write(sb.get_page_source())
+                    # # Save the HTML content to a file for debugging (optional)
+                    # with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
+                    #     f.write(sb.get_page_source())
 
                     # Details Info #
                     # Scrape the details from the page
                     details_info = DetailsInfo(sb)
-                    self.cur_details = details_info.details
+                    DETAIL_COLUMNS = details_info.DETAIL_COLUMNS
+                    
+                    # 1. Initialize cur_details with all columns from prop
+                    self.cur_details = {col: getattr(prop, col) for col in prop.__table__.columns.keys()}
+                    
+                    # 2. Update only the detail columns with freshly scraped values
+                    for col in DETAIL_COLUMNS:
+                        if col in details_info.details:
+                            self.cur_details[col] = details_info.details[col]
 
-                    # # Save to DB
-                    # self.save_to_db_details(self.session)
-
-                    # # Mark as fetched and commit
-                    # prop.details_fetched = True
-                    # self.session.commit()
-                    # print("> Details updated in DB.")
-
-                    # # Sleep to avoid blocking
-                    # sleep_time = random.uniform(2, 5)
-                    # print(f"> Sleeping for {sleep_time:.2f} seconds...")
-                    # time.sleep(sleep_time)
+                    # Database #
+                    self.save_to_db_details(DETAIL_COLUMNS)
+                    print("")
 
                 except Exception as e:
-                    print(f"❌ Error scraping details for {prop.property_url}: {e}")
-                    self.session.rollback()
+                    print(f"❌ Error Scraping Details: {e}")
+                    print("")
                     continue
-
-        # # After scraping details for a property
-        # property.details_fetched = True
-        # self.session.commit()
 
     # Use all properties to save to CSV
     def save_to_csv(self, filename="data/properties.csv"):
@@ -231,10 +226,10 @@ class ScraperUtils:
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
-    def save_to_db_details(self, session):
+    def save_to_db_details(self, DETAIL_COLUMNS):
         # Save the details to the database
         try:
-            Properties.update_details(session, self.cur_details)
+            Properties.update_details(self.cur_details, DETAIL_COLUMNS)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
@@ -507,6 +502,15 @@ class ListingsInfo:
             return selling_price_text
         
 class DetailsInfo:
+    DETAIL_COLUMNS = [
+        "description", 
+        "property_type", "property_type_text", 
+        "ownership_type", "ownership_type_text",
+        "bedroom_count", "bathroom_count", 
+        "floor_size_sqft", "land_size_sqft", 
+        "psf_floor", "psf_land"
+    ]
+
     def __init__(self, sb):
         self.sb = sb
         self.print_output = True
@@ -514,15 +518,6 @@ class DetailsInfo:
         self.extract_details()
 
     def extract_details(self):
-        # List of details
-        fields = [
-            "description", 
-            "property_type", "property_type_text", 
-            "ownership_type", "ownership_type_text",
-            "bedroom_count", "bathroom_count",
-            "floor_size_sqft", "land_size_sqft",
-            "psf_floor", "psf_land"
-        ]
         # Extract the details from URL
         try:
             # Listing dictionary to store the extracted information
@@ -566,7 +561,7 @@ class DetailsInfo:
             # Print the extracted information for debugging
             if self.print_output:
                 printed = set()
-                for field in fields:
+                for field in self.DETAIL_COLUMNS:
                     # Description
                     if field == "description" and "description" not in printed:
                         desc_val = details['description']
@@ -596,7 +591,6 @@ class DetailsInfo:
                     ]:
                         display_name = field.replace("_", " ").title()
                         print(f"> {display_name}: {details[field]}")
-                print("")
 
             # Assign the extracted details to the instance variable
             self.details = details
