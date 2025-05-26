@@ -11,9 +11,9 @@ class PropertyGuruInitialScraper:
             print(f"❌ Error on run_scraper_listings: {e}")
 
     @staticmethod
-    def run_scraper_details(scraper, filename):
+    def run_scraper_details(scraper, max_scrape, filename):
         try:
-            scraper.scrape_details(max_scrape=5)
+            scraper.scrape_details(max_scrape=max_scrape)
             scraper.save_to_csv(filename=filename)
             print("")
         except Exception as e:

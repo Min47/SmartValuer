@@ -120,6 +120,7 @@ if __name__ == '__main__':
             scraper = ScraperUtils(session=session, mode=None, unit_type=None)
             PropertyGuruInitialScraper.run_scraper_details(
                 scraper=scraper,
+                max_scrape=5,  # Set to 5 for initial testing, can be increased later
                 filename=filename
             )
         finally:
