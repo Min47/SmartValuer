@@ -508,6 +508,7 @@ class DetailsInfo:
         "property_type", "property_type_text", 
         "ownership_type", "ownership_type_text",
         "bedroom_count", "bathroom_count", 
+        "furnishing",
         "floor_size_sqft", "land_size_sqft", 
         "psf_floor", "psf_land"
     ]
@@ -542,6 +543,7 @@ class DetailsInfo:
                 # Extract the details from the modal
                 details['property_type'], details['property_type_text'] = self.get_property_type()
                 details['ownership_type'], details['ownership_type_text'] = self.get_ownership_type()
+                details['furnishing'] = self.get_furnishing()
                 details['floor_size_sqft'] = self.get_floor_size_sqft()
                 details['land_size_sqft'] = self.get_land_size_sqft()
                 details['psf_floor'] = self.get_psf_floor()
@@ -709,6 +711,22 @@ class DetailsInfo:
             pass
         finally:
             return bathroom_count
+        
+    def get_furnishing(self):
+        furnishing = None
+        elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+        for el in elements:
+            text = el.text.strip().lower()
+            if 'unfurnished' in text:
+                furnishing = 'Unfurnished'
+                break
+            elif 'partially furnished' in text:
+                furnishing = 'Partially Furnished'
+                break
+            elif 'fully furnished' in text or 'furnished' in text:
+                furnishing = 'Fully Furnished'
+                break
+        return furnishing
 
     def get_floor_size_sqft(self):
         elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')

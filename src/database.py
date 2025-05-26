@@ -126,6 +126,7 @@ class Properties(Base):
     ownership_type_text = Column(String(255), default=None)
     bedroom_count = Column(Integer, default=None)
     bathroom_count = Column(Integer, default=None)
+    furnishing = Column(Enum('Unfurnished', 'Partially Furnished', 'Fully Furnished', name='furnishing_enum'), default=None)
     floor_size_sqft = Column(Integer, default=None)
     land_size_sqft = Column(Integer, default=None)
     psf_floor = Column(DECIMAL(12, 2), default=None)

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS properties (
 	ownership_type_text VARCHAR(255) DEFAULT NULL,
 	bedroom_count INT DEFAULT NULL,
 	bathroom_count INT DEFAULT NULL,
+	furnishing ENUM('Unfurnished', 'Partially Furnished', 'Fully Furnished') DEFAULT NULL,
 	floor_size_sqft INT DEFAULT NULL,
 	land_size_sqft INT DEFAULT NULL,
 	psf_floor DECIMAL(12,2) DEFAULT NULL,
