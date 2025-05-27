@@ -209,16 +209,17 @@ class ScraperUtils:
             print(f"❌ Error Saving to DB: {e}")
 
     def save_listings_to_csv(self, path):
-        if not self.csv_listings:
+        # Flatten the list of lists into a single list of dicts
+        all_rows = [item for sublist in self.csv_listings for item in sublist]
+        if not all_rows:
             return
-        else:
-            fieldnames = list(self.csv_listings[0][0].keys())
-            file_exists = os.path.isfile(path)
+        fieldnames = list(all_rows[0].keys())
+        file_exists = os.path.isfile(path)
         with open(path, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists or os.stat(path).st_size == 0:
                 writer.writeheader()
-            for row in self.csv_listings:
+            for row in all_rows:
                 writer.writerow(row)
 
     def save_to_db_details(self, DETAIL_COLUMNS):
