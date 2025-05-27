@@ -519,7 +519,7 @@ class DetailsInfo:
                 self.sb.execute_script("arguments[0].scrollIntoView();", see_all_details_button)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="details-section"]//button[@da-id="meta-table-see-more-btn"]', timeout=5)
                 self.sb.execute_script("arguments[0].click();", see_all_details_button)
-                self.sb.sleep(2)
+                self.sb.sleep(1)
 
                 # Extract the details from the modal
                 details['property_type'], details['property_type_text'] = self.get_property_type()
@@ -538,7 +538,7 @@ class DetailsInfo:
                     self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                     self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
                     self.sb.execute_script("arguments[0].click();", close_button)
-                    self.sb.sleep(2)
+                    self.sb.sleep(0.5)
                 except NoSuchElementException:
                     print("> 'Close' Button Not Found")
 
