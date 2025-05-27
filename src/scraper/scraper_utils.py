@@ -200,25 +200,6 @@ class ScraperUtils:
                     print("")
                     continue
 
-    # Use all properties to save to CSV
-    def save_to_csv(self, filename):
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        if not self.all_properties:
-            print("= No properties to save.")
-            return
-    
-        # Dynamically detect fieldnames from the first property
-        fieldnames = self.all_properties[0].keys()
-        file_exists = os.path.isfile(filename)
-        write_header = not file_exists or os.path.getsize(filename) == 0
-    
-        with open(filename, mode='a', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if write_header:
-                writer.writeheader()
-            writer.writerows(self.all_properties)
-        # print(f"= Saved {len(self.all_properties)} Properties to {filename}")
-
     # Use current page listings to save to DB, since the listings will be saved per page
     def save_to_db_listings(self, session):
         # Save the listings to the database

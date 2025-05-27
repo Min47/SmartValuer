@@ -8,5 +8,4 @@ class PropertyGuruIncrementalScraper:
         for mode in modes:
             scraper = ScraperUtils(mode=mode)
             scraper.scrape(desired_pages=1)  # Remove desired_pages for full scrape
-            scraper.save_to_csv(filename=f"data/listings_{mode}.csv")
             scraper.close()
