@@ -7,129 +7,107 @@ import database
 import os
 import time
 
-# Allowed values
-ALLOWED_MODES = {"Rent", "Buy"}
-ALLOWED_UNIT_TYPES = {-1, 0, 1, 2, 3, 4, 5}
+class Prep:
+    # Allowed values
+    ALLOWED_MODES = {"Rent", "Buy"}
+    ALLOWED_UNIT_TYPES = {-1, 0, 1, 2, 3, 4, 5}
 
-def validate_modes(modes):
-    for mode in modes:
-        if mode not in ALLOWED_MODES:
-            raise ValueError(f"Invalid mode: {mode}. Allowed: {ALLOWED_MODES}")
+    def __init__(self):
+        self.env = dotenv_values(".env")
+        self.db_config = self.get_db_config()
+        self.modes = self.parse_modes()
+        self.unit_types = self.parse_unit_types()
+        self.run_initial_listings = self.get_env_bool("RUN_INITIAL_LISTINGS", default="true")
+        self.run_initial_details = self.get_env_bool("RUN_INITIAL_DETAILS", default="true")
 
-def validate_unit_types(unit_types):
-    for ut in unit_types:
-        if ut not in ALLOWED_UNIT_TYPES:
-            raise ValueError(f"Invalid unit_type: {ut}. Allowed: {ALLOWED_UNIT_TYPES}")
+        self.validate_input()
+        self.setup_csvs()
+        self.session = self.setup_database()
 
-# Load environment variables
-def get_env():
-    return dotenv_values(".env")
+    def get_env_var(self, key, default=None):
+        return os.environ.get(key, self.env.get(key, default))
+    
+    def get_env_bool(self, key, default="false"):
+        return self.get_env_var(key, default).lower() == "true"
+    
+    def get_db_config(self):
+        return {
+            "user": self.get_env_var("DATABASE_USER"),
+            "password": self.get_env_var("DATABASE_PASSWORD"),
+            "host": self.get_env_var("DATABASE_HOST"),
+            "port": self.get_env_var("DATABASE_PORT"),
+            "name": self.get_env_var("DATABASE_NAME"),
+        }
+    
+    def parse_modes(self):
+        return [m.strip() for m in self.get_env_var("MODES", "").split(",") if m.strip()]
+    
+    def parse_unit_types(self):
+        return [int(u.strip()) for u in self.get_env_var("UNIT_TYPES", "").split(",") if u.strip()]
 
-def get_db_config(env):
-    return {
-        "user": os.environ.get("DATABASE_USER", env.get("DATABASE_USER")),
-        "password": os.environ.get("DATABASE_PASSWORD", env.get("DATABASE_PASSWORD")),
-        "host": os.environ.get("DATABASE_HOST", env.get("DATABASE_HOST")),
-        "port": os.environ.get("DATABASE_PORT", env.get("DATABASE_PORT")),
-        "name": os.environ.get("DATABASE_NAME", env.get("DATABASE_NAME")),
-    }
+    def validate_input(self):
+        for mode in self.modes:
+            if mode not in self.ALLOWED_MODES:
+                raise ValueError(f"Invalid mode: {mode}. Allowed: {self.ALLOWED_MODES}")
+        for unit_type in self.unit_types:
+            if unit_type not in self.ALLOWED_UNIT_TYPES:
+                raise ValueError(f"Invalid unit_type: {unit_type}. Allowed: {self.ALLOWED_UNIT_TYPES}")
+            
+    def setup_csvs(self):
+        for path_key in ["PROPERTIES_CSV_PATH", "DETAILS_CSV_PATH"]:
+            path = self.get_env_var(path_key, f"data/{path_key.lower()}.csv")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, 'w', encoding='utf-8').close()
+    
+    def setup_database(self):
+        database.init_db(self.db_config)
+        session = database.Session()
+        session.execute(text("SELECT 1"))
 
-def get_modes(env):
-    modes = os.environ.get("MODES", env.get("MODES", ""))
-    return [m.strip() for m in modes.split(",") if m.strip()]
+        current_id = session.execute(text("SELECT CONNECTION_ID()")).scalar()
+        for pid, user in session.execute(text("SELECT ID, USER FROM performance_schema.processlist")):
+            if pid != current_id and user == session.bind.url.username:
+                try:
+                    session.execute(text(f"KILL {pid}"))
+                except Exception:
+                    pass
+        session.commit()
 
-def get_unit_types(env):
-    unit_types = os.environ.get("UNIT_TYPES", env.get("UNIT_TYPES", ""))
-    result = []
-    for u in unit_types.split(","):
-        u = u.strip()
-        result.append(int(u))
-    return result
+        print(f"\n> Host: {session.bind.url.host}")
+        print(f"> Port: {session.bind.url.port}")
+        print(f"> User: {session.bind.url.username}")
+        print(f"> Database: {session.bind.url.database}\n")
+        return session
 
 # Main
 if __name__ == '__main__':
     try:
-        # Load environment variables
-        env = get_env()
-        modes = get_modes(env)
-        unit_types = get_unit_types(env)
-        db_config = get_db_config(env)
+        # --- Preparation Phase --- #
+        prep = Prep()
 
-        # Validate user input
-        validate_modes(modes)
-        validate_unit_types(unit_types)
+        # --- Initial Scraper Phase --- #
+        if prep.run_initial_listings:
+            for mode in prep.modes:
+                for unit_type in prep.unit_types:
+                    if mode == "Buy" and unit_type == -1:
+                        continue
+                    with database.Session() as sess:
+                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type)
+                        PropertyGuruInitialScraper.run_scraper_listings(
+                            scraper=scraper, 
+                            desired_pages=2
+                        )
+                    time.sleep(30)
 
-        # Clear CSV at the start of the run
-        filename = os.environ.get("PROPERTIES_CSV_PATH", env.get("PROPERTIES_CSV_PATH", "data/properties.csv")) # Get CSV path from env or use default
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'w', encoding='utf-8') as f:
-            pass  # This will clear the file
-
-        # --- Initialize database with env/config and create session --- #
-        database.init_db(db_config)
-        session = database.Session()
-        session.execute(text("SELECT 1"))
-
-        # --- Kill other MySQL sessions --- #
-        current_id = session.execute(text("SELECT CONNECTION_ID()")).scalar()
-        processes = session.execute(text("SELECT ID, USER FROM performance_schema.processlist")).fetchall()
-        for proc in processes:
-            pid = proc[0]
-            user = proc[1]
-            if pid != current_id and user == session.bind.url.username:
-                try:
-                    session.execute(text(f"KILL {pid}"))
-                    # print(f"Killed Session: {pid} (User: {user})")
-                except Exception as e:
-                    # print(f"Could Not Kill Session: {pid} (User: {user}) - {e}")
-                    pass
-        session.commit()
-
-        # --- Print database connection details --- #
-        print("")
-        print(f"> Host: {session.bind.url.host}")
-        print(f"> Port: {session.bind.url.port}")
-        print(f"> User: {session.bind.url.username}")
-        print(f"> Database: {session.bind.url.database}")
-        print("")
-
-        # [Initial] Scraper Listings #
-        modes = ["Rent", "Buy"]
-        unit_types = [-1, 0, 5]
-        for mode in modes:
-            for unit_type in unit_types:
-                if mode == "Buy" and unit_type == -1:
-                    continue
-                # Create a new session for each run
-                session = database.Session()
-                try:
-                    scraper = ScraperUtils(session=session, mode=mode, unit_type=unit_type)
-                    PropertyGuruInitialScraper.run_scraper_listings(
-                        scraper=scraper,
-                        desired_pages=2,
-                        filename=filename
-                    )
-                finally:
-                    session.close()
-                # print("Sleeping for 30 seconds...")
-                time.sleep(30)  # Sleep for 30 second between different modes and unit types
-
-        # [Initial] Scraper Details #
-        session = database.Session()
-        try:
-            scraper = ScraperUtils(session=session, mode=None, unit_type=None)
-            PropertyGuruInitialScraper.run_scraper_details(
-                scraper=scraper,
-                max_scrape=5,  # Set to 5 for initial testing, can be increased later
-                filename=filename
-            )
-        finally:
-            session.close()
-
+        if prep.run_initial_details:
+            with database.Session() as sess:
+                scraper = ScraperUtils(session=sess, mode=None, unit_type=None)
+                PropertyGuruInitialScraper.run_scraper_details(
+                    scraper=scraper, 
+                    max_scrape=5
+                )
     except Exception as e:
         print(f"❌ Error on Main: {e}")
     finally:
-        # Close the database session if it was created
         if 'session' in locals():
-            session.close()
-        print("")
+            prep.session.close()
