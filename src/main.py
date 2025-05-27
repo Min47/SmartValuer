@@ -55,22 +55,30 @@ class Prep:
                 raise ValueError(f"Invalid unit_type: {unit_type}. Allowed: {self.ALLOWED_UNIT_TYPES}")
             
     def setup_csvs(self):
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        if self.run_initial_listings:
-            base_path = self.get_env_var("PROPERTIES_CSV_PATH", "data/properties_csv.csv")
+        def create_and_cleanup_csv(env_key, default_path):
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_path = self.get_env_var(env_key, default_path)
             root, ext = os.path.splitext(base_path)
             path = f"{root}_{timestamp}{ext}"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             open(path, 'w', encoding='utf-8').close()
-            self.properties_csv_path = path
-        if self.run_initial_details:
-            base_path = self.get_env_var("DETAILS_CSV_PATH", "data/details_csv.csv")
-            root, ext = os.path.splitext(base_path)
-            path = f"{root}_{timestamp}{ext}"
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            open(path, 'w', encoding='utf-8').close()
-            self.details_csv_path = path
+
+            # Cleanup old CSVs for this base path
+            files = [f for f in os.listdir(os.path.dirname(root))
+                     if f.startswith(os.path.basename(root)) and f.endswith('.csv')]
+            files.sort(reverse=True)
+            for file in files[10:]:
+                try:
+                    os.remove(os.path.join(os.path.dirname(root), file))
+                except Exception as e:
+                    print(f"❌ Error Deleting old CSV file {file}: {e}")
+            return path
     
+        if self.run_initial_listings:
+            self.properties_csv_path = create_and_cleanup_csv("PROPERTIES_CSV_PATH", "properties.csv")
+        if self.run_initial_details:
+            self.details_csv_path = create_and_cleanup_csv("DETAILS_CSV_PATH", "details.csv")
+
     def setup_database(self):
         database.init_db(self.db_config)
         session = database.Session()
