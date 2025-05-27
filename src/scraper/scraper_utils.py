@@ -201,7 +201,7 @@ class ScraperUtils:
                     continue
 
     # Use all properties to save to CSV
-    def save_to_csv(self, filename="data/properties.csv"):
+    def save_to_csv(self, filename):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         if not self.all_properties:
             print("= No properties to save.")
