@@ -4,6 +4,7 @@ from scraper.initial_full_scrape import PropertyGuruInitialScraper
 from scraper.scraper_utils import ScraperUtils
 from sqlalchemy import text
 import database
+import datetime
 import os
 import time
 
@@ -54,14 +55,21 @@ class Prep:
                 raise ValueError(f"Invalid unit_type: {unit_type}. Allowed: {self.ALLOWED_UNIT_TYPES}")
             
     def setup_csvs(self):
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         if self.run_initial_listings:
-            path = self.get_env_var("PROPERTIES_CSV_PATH", "data/properties_csv.csv")
+            base_path = self.get_env_var("PROPERTIES_CSV_PATH", "data/properties_csv.csv")
+            root, ext = os.path.splitext(base_path)
+            path = f"{root}_{timestamp}{ext}"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             open(path, 'w', encoding='utf-8').close()
+            self.properties_csv_path = path
         if self.run_initial_details:
-            path = self.get_env_var("DETAILS_CSV_PATH", "data/details_csv.csv")
+            base_path = self.get_env_var("DETAILS_CSV_PATH", "data/details_csv.csv")
+            root, ext = os.path.splitext(base_path)
+            path = f"{root}_{timestamp}{ext}"
             os.makedirs(os.path.dirname(path), exist_ok=True)
             open(path, 'w', encoding='utf-8').close()
+            self.details_csv_path = path
     
     def setup_database(self):
         database.init_db(self.db_config)
@@ -100,7 +108,7 @@ if __name__ == '__main__':
                         PropertyGuruInitialScraper.run_scraper_listings(
                             scraper=scraper, 
                             desired_pages=2,
-                            listings_csv_path=prep.get_env_var("PROPERTIES_CSV_PATH", "data/properties.csv")
+                            listings_csv_path=prep.properties_csv_path
                         )
                     time.sleep(30)
 
@@ -110,7 +118,7 @@ if __name__ == '__main__':
                 PropertyGuruInitialScraper.run_scraper_details(
                     scraper=scraper, 
                     max_scrape=5,
-                    details_csv_path=prep.get_env_var("DETAILS_CSV_PATH", "data/details.csv")
+                    details_csv_path=prep.details_csv_path
                 )
     except Exception as e:
         print(f"❌ Error on Main: {e}")
