@@ -17,8 +17,9 @@ class ScraperUtils:
         self.mode = mode
         self.unit_type = unit_type
         self.cur_page_listings = []
-        self.all_properties = []
+        self.csv_listings = []
         self.cur_details = {}
+        self.csv_details = []
 
     def scrape_listings(self, desired_pages=None):
         cur_page = 1
@@ -94,7 +95,7 @@ class ScraperUtils:
                     # Extract the listing information from the cards
                     listings_info = ListingsInfo(cards, self.mode, self.unit_type)
                     self.cur_page_listings = listings_info.cur_page_listings
-                    self.all_properties.extend(self.cur_page_listings)
+                    self.csv_listings.append(self.cur_page_listings)
 
                     # Database #
                     # Save the listings to the database
@@ -185,6 +186,7 @@ class ScraperUtils:
                     
                     # 1. Initialize cur_details with all columns from prop
                     self.cur_details = {col: getattr(prop, col) for col in prop.__table__.columns.keys()}
+                    self.csv_details.append(self.cur_details)
                     
                     # 2. Update only the detail columns with freshly scraped values
                     for col in DETAIL_COLUMNS:
@@ -200,20 +202,43 @@ class ScraperUtils:
                     print("")
                     continue
 
-    # Use current page listings to save to DB, since the listings will be saved per page
     def save_to_db_listings(self, session):
-        # Save the listings to the database
         try:
             Properties.batch_upsert_listings(session, self.cur_page_listings)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
 
+    def save_listings_to_csv(self, path):
+        if not self.csv_listings:
+            return
+        else:
+            fieldnames = list(self.csv_listings[0][0].keys())
+            file_exists = os.path.isfile(path)
+        with open(path, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if not file_exists or os.stat(path).st_size == 0:
+                writer.writeheader()
+            for row in self.csv_listings:
+                writer.writerow(row)
+
     def save_to_db_details(self, DETAIL_COLUMNS):
-        # Save the details to the database
         try:
             Properties.update_details(self.cur_details, DETAIL_COLUMNS)
         except Exception as e:
             print(f"❌ Error Saving to DB: {e}")
+
+    def save_details_to_csv(self, path):
+        if not self.csv_details:
+            return
+        else:
+            fieldnames = list(self.csv_details[0].keys())
+            file_exists = os.path.isfile(path)
+        with open(path, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if not file_exists or os.stat(path).st_size == 0:
+                writer.writeheader()
+            for row in self.csv_details:
+                writer.writerow(row)
 
 class ListingsInfo:
     def __init__(self, cards, mode, unit_type):
