@@ -506,7 +506,7 @@ class DetailsInfo:
     DETAIL_COLUMNS = [
         "description", 
         "property_type", "property_type_text", 
-        "ownership_type", "ownership_type_text",
+        "lease_term", "lease_term_text",
         "bedroom_count", "bathroom_count", 
         "furnishing",
         "floor_size_sqft", "land_size_sqft", 
@@ -542,7 +542,7 @@ class DetailsInfo:
 
                 # Extract the details from the modal
                 details['property_type'], details['property_type_text'] = self.get_property_type()
-                details['ownership_type'], details['ownership_type_text'] = self.get_ownership_type()
+                details['lease_term'], details['lease_term_text'] = self.get_lease_term()
                 details['furnishing'] = self.get_furnishing()
                 details['floor_size_sqft'] = self.get_floor_size_sqft()
                 details['land_size_sqft'] = self.get_land_size_sqft()
@@ -582,15 +582,15 @@ class DetailsInfo:
                     elif field in ["property_type", "property_type_text"] and "property_type" not in printed:
                         print(f"> Property Type: {details['property_type']} ({details['property_type_text']})")
                         printed.add("property_type")
-                    # Ownership Type, Ownership Type Text
-                    elif field in ["ownership_type", "ownership_type_text"] and "ownership_type" not in printed:
-                        print(f"> Ownership Type: {details['ownership_type']} ({details['ownership_type_text']})")
-                        printed.add("ownership_type")
+                    # Lease Term, Lease Term Text
+                    elif field in ["lease_term", "lease_term_text"] and "lease_term" not in printed:
+                        print(f"> Lease Term: {details['lease_term']} ({details['lease_term_text']})")
+                        printed.add("lease_term")
                     # Elsewhere
                     elif field not in [
                         "description",
                         "property_type", "property_type_text",
-                        "ownership_type", "ownership_type_text"
+                        "lease_term", "lease_term_text"
                     ]:
                         display_name = field.replace("_", " ").title()
                         print(f"> {display_name}: {details[field]}")
@@ -661,22 +661,22 @@ class DetailsInfo:
         finally:
             return property_type, property_type_text
         
-    def get_ownership_type(self):
-        ownership_type = None
-        ownership_type_text = None
+    def get_lease_term(self):
+        lease_term = None
+        lease_term_text = None
         try:
-            ownership_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]').text
-            lower = ownership_type_text.lower()
+            lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]').text
+            lower = lease_term_text.lower()
             if 'lease' in lower:
-                ownership_type = 'Leasehold'
+                lease_term = 'Leasehold'
             elif 'freehold' in lower:
-                ownership_type = 'Freehold'
+                lease_term = 'Freehold'
             else:
-                ownership_type = None
+                lease_term = None
         except NoSuchElementException:
             pass
         finally:
-            return ownership_type, ownership_type_text
+            return lease_term, lease_term_text
         
     def get_bedroom_count(self):
         bedroom_count = None
