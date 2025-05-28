@@ -894,7 +894,6 @@ class DetailsInfo:
                 return ' || '.join(all_texts)
             except Exception:
                 return None
-
         
     def get_raw_amenities_text(self, is_button_present=True):
         if is_button_present:
@@ -911,7 +910,6 @@ class DetailsInfo:
                 return ' || '.join(all_texts)
             except Exception:
                 return None
-            
         
     def get_raw_facilities_text(self, is_button_present=True):
         if is_button_present:
