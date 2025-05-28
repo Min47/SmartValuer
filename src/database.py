@@ -349,6 +349,28 @@ class Properties(Base):
             time.sleep(random.uniform(0.5, 1.5))  # Sleep for a random time between 0.5 and 1.5 seconds
 
     @classmethod
+    def update_field_value(cls, property_id, field_name, new_value):
+        # Always use the global Session factory to create a new session
+        new_session = Session()
+        try:
+            property = new_session.query(cls).filter_by(property_id=property_id).first()
+            if not property:
+                print(f"> ❌ Error: Property with ID {property_id} not found.")
+                return
+
+            old_value = getattr(property, field_name, None)
+            setattr(property, field_name, new_value)
+            property.updated_at = func.now()
+            property.updated_fields = field_name
+            property.updated_old_values = str(old_value) if old_value is not None else None
+            new_session.commit()
+        except Exception as e:
+            new_session.rollback()
+            print(f"> ❌ Error: Could Not Update Field. Reason: {e}\n")
+        finally:
+            new_session.close()
+
+    @classmethod
     def delete_listing(cls, property_id):
         # Always use the global Session factory to create a new session
         new_session = Session()

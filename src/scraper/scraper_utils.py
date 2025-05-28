@@ -179,6 +179,16 @@ class ScraperUtils:
                     # with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
                     #     f.write(sb.get_page_source())
 
+                    # Checking if we are in the details page instead of the listings page #
+                    if not sb.find_elements('.//div[@class="property-snapshot-section"]'):
+                        print("= Details Page Not Found")
+                        Properties.update_field_value(
+                            property_id=prop.property_id, 
+                            field_name="details_fetched",
+                            new_value=True
+                        )
+                        continue
+
                     # Details Info #
                     # Scrape the details from the page
                     details_info = DetailsInfo(sb)
