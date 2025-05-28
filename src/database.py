@@ -132,6 +132,8 @@ class Properties(Base):
     psf_floor = Column(DECIMAL(12, 2), default=None)
     psf_land = Column(DECIMAL(12, 2), default=None)
     raw_details_text = Column(Text, default=None)
+    raw_amenities_text = Column(Text, default=None)
+    raw_facilities_text = Column(Text, default=None)
 
     # Default values
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())

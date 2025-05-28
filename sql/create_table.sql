@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS properties (
 	psf_floor DECIMAL(12,2) DEFAULT NULL,
 	psf_land DECIMAL(12,2) DEFAULT NULL,
 	raw_details_text TEXT DEFAULT NULL,
+	raw_amenities_text TEXT DEFAULT NULL,
+	raw_facilities_text TEXT DEFAULT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NULL DEFAULT NULL,
 	updated_fields TEXT DEFAULT NULL,
