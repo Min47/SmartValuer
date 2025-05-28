@@ -517,7 +517,8 @@ class DetailsInfo:
         "bedroom_count", "bathroom_count", 
         "furnishing",
         "floor_size_sqft", "land_size_sqft", 
-        "psf_floor", "psf_land"
+        "psf_floor", "psf_land",
+        "raw_details_text"
     ]
 
     def __init__(self, sb):
@@ -555,6 +556,7 @@ class DetailsInfo:
                 details['land_size_sqft'] = self.get_land_size_sqft()
                 details['psf_floor'] = self.get_psf_floor()
                 details['psf_land'] = self.get_psf_land()
+                details['raw_details_text'] = self.get_raw_details_text()
             except NoSuchElementException:
                 print("> 'See All Details' Button Not Found")
             else:
@@ -597,7 +599,8 @@ class DetailsInfo:
                     elif field not in [
                         "description",
                         "property_type", "property_type_text",
-                        "lease_term", "lease_term_text"
+                        "lease_term", "lease_term_text",
+                        # "raw_details_text",
                     ]:
                         display_name = field.replace("_", " ").title()
                         print(f"> {display_name}: {details[field]}")
@@ -782,3 +785,11 @@ class DetailsInfo:
                     psf_land = Decimal(match.group(1).replace(',', '')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     break
         return psf_land
+    
+    def get_raw_details_text(self):
+        try:
+            elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            all_texts = [el.text.strip() for el in elements if el.text.strip()]
+            return ' || '.join(all_texts)
+        except Exception:
+            return None
