@@ -139,7 +139,7 @@ class ScraperUtils:
 
                     # Increment the page number
                     cur_page += 1
-                    time.sleep(random.uniform(2, 5))  # Sleep for a random time between 2 to 5 seconds
+                    time.sleep(random.uniform(2, 5))
                     print("")
                 except Exception as e:
                     print(f"❌ Error on Page {cur_page}: {e}")
@@ -173,7 +173,7 @@ class ScraperUtils:
                     print(f"= [{idx}/{len(properties)}] ID: {prop.property_id} | Title: {prop.title} | URL: {prop.property_url}")
                     sb.uc_open_with_reconnect(prop.property_url, 4)
                     sb.uc_gui_click_captcha()
-                    sb.sleep(2)
+                    sb.sleep(0.5)
 
                     # # Save the HTML content to a file for debugging (optional)
                     # with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
@@ -549,7 +549,7 @@ class DetailsInfo:
                     see_all_details_button = buttons[0]
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_details_button)
                     self.sb.execute_script("arguments[0].click();", see_all_details_button)
-                    self.sb.sleep(1)
+                    self.sb.sleep(0.1)
                 # Extract the details (from modal if button, else from section)
                 details['property_type'], details['property_type_text'] = self.get_property_type(is_button_present)
                 details['lease_term'], details['lease_term_text'] = self.get_lease_term(is_button_present)
@@ -566,7 +566,6 @@ class DetailsInfo:
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
                         self.sb.execute_script("arguments[0].click();", close_button)
-                        self.sb.sleep(0.5)
                     except Exception:
                         pass
             except Exception:
@@ -593,14 +592,13 @@ class DetailsInfo:
                     see_all_amenities_button = buttons[0]
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_amenities_button)
                     self.sb.execute_script("arguments[0].click();", see_all_amenities_button)
-                    self.sb.sleep(1)
+                    self.sb.sleep(0.1)
                     details['raw_amenities_text'] = self.get_raw_amenities_text(is_button_present=True)
                     # Try to close the modal
                     try:
                         close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]')
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
-                        self.sb.sleep(0.5)
                     except Exception:
                         pass
                 else:
@@ -619,14 +617,13 @@ class DetailsInfo:
                     see_all_facilities_button = buttons[0]
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_facilities_button)
                     self.sb.execute_script("arguments[0].click();", see_all_facilities_button)
-                    self.sb.sleep(1)
+                    self.sb.sleep(0.1)
                     details['raw_facilities_text'] = self.get_raw_facilities_text(is_button_present=True)
                     # Try to close the modal
                     try:
                         close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]')
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
-                        self.sb.sleep(0.5)
                     except Exception:
                         pass
                 else:
