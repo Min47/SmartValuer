@@ -112,7 +112,7 @@ if __name__ == '__main__':
                     if mode == "Buy" and unit_type == -1:
                         continue
                     with database.Session() as sess:
-                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type)
+                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=None)
                         PropertyGuruInitialScraper.run_scraper_listings(
                             scraper=scraper, 
                             desired_pages=2,
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
         if prep.run_initial_details:
             with database.Session() as sess:
-                scraper = ScraperUtils(session=sess, mode=None, unit_type=None)
+                scraper = ScraperUtils(session=sess, mode=None, unit_type=None, last_posted=None)
                 PropertyGuruInitialScraper.run_scraper_details(
                     scraper=scraper, 
                     max_scrape=5,

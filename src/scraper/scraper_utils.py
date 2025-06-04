@@ -12,10 +12,11 @@ import re
 import time
 
 class ScraperUtils:
-    def __init__(self, session, mode, unit_type):
+    def __init__(self, session, mode="Rent", unit_type=-1, last_posted=2):
         self.session = session
         self.mode = mode
         self.unit_type = unit_type
+        self.last_posted = last_posted
         self.cur_page_listings = []
         self.csv_listings = []
         self.cur_details = {}
@@ -29,6 +30,7 @@ class ScraperUtils:
         lines = [
             f"= Scraping Mode: {self.mode}",
             f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type} Bedroom+'}",
+            f"= Last Posted: {self.last_posted} days ago" if self.last_posted is not None else "None",
             f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}"
         ]
         max_len = max(len(line) for line in lines)
@@ -54,10 +56,15 @@ class ScraperUtils:
                     
                     # Construct the URL based on the filters
                     if self.mode == "Rent":
-                        url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                        if self.last_posted is None:
+                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                        else:
+                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&lastPosted={self.last_posted}"
                     elif self.mode == "Buy":
-                        url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
-                    # Print the URL for debugging
+                        if self.last_posted is None:
+                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                        else:
+                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&lastPosted={self.last_posted}"
                     print(f"> URL: {url}")
                     
                     # Solve captcha
