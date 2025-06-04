@@ -30,7 +30,7 @@ class ScraperUtils:
         lines = [
             f"= Scraping Mode: {self.mode}",
             f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type} Bedroom+'}",
-            f"= Last Posted: {self.last_posted} days ago" if self.last_posted is not None else "= Last Posted: None",
+            f"= Last Posted: {self.last_posted} Days Ago" if self.last_posted is not None else "= Last Posted: None",
             f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}"
         ]
         max_len = max(len(line) for line in lines)
