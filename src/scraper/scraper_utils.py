@@ -560,7 +560,7 @@ class DetailsInfo:
 
             # Click 'See All Details' button (might not be present)
             try:
-                details_section = self.sb.find_element(By.XPATH, './/section[@class="details-section"]', timeout=5)
+                details_section = self.sb.find_element(By.XPATH, './/section[@class="details-section"]', timeout=2)
                 self.sb.execute_script("arguments[0].scrollIntoView();", details_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="details-section"]', timeout=5)
                 # Try to find the 'See All Details' button
@@ -583,7 +583,7 @@ class DetailsInfo:
                 # Try to close the modal if it was opened
                 if is_button_present:
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
                         self.sb.execute_script("arguments[0].click();", close_button)
@@ -604,7 +604,7 @@ class DetailsInfo:
 
             # Click 'See All x Amenities' button (might not be present)
             try:
-                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=2)
+                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=1)
                 self.sb.execute_script("arguments[0].scrollIntoView();", amenities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
                 # Try to find the 'See All Amenities' button
@@ -617,7 +617,7 @@ class DetailsInfo:
                     details['raw_amenities_text'] = self.get_raw_amenities_text(is_button_present=True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
@@ -629,7 +629,7 @@ class DetailsInfo:
 
             # Click 'See All x Facilities' button (might not be present)
             try:
-                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=2)
+                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=1)
                 self.sb.execute_script("arguments[0].scrollIntoView();", facilities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
                 # Try to find the 'See All Facilities' button
@@ -642,7 +642,7 @@ class DetailsInfo:
                     details['raw_facilities_text'] = self.get_raw_facilities_text(is_button_present=True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
@@ -698,13 +698,13 @@ class DetailsInfo:
         try:
             # Try to get subtitle
             try:
-                subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]', timeout=2).text
+                subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]', timeout=1).text
             except Exception:
                 subtitle = None
 
             # Try to get main description
             try:
-                description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]', timeout=2).text
+                description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]', timeout=1).text
             except Exception:
                 description = None
 
@@ -729,9 +729,9 @@ class DetailsInfo:
         property_type_text = None
         try:
             if is_button_present:
-                property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]', timeout=2).text
+                property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]', timeout=1).text
             else:
-                property_type_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="home-open-o"]/../*[2]', timeout=2).text
+                property_type_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="home-open-o"]/../*[2]', timeout=1).text
             
             # Extract the part before " for "
             match = re.match(r"(.+?)\s+for\s+", property_type_text, re.IGNORECASE)
@@ -761,9 +761,9 @@ class DetailsInfo:
         lease_term_text = None
         try:
             if is_button_present:
-                lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]', timeout=2).text
+                lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]', timeout=1).text
             else:
-                lease_term_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="calendar-days-o"]/../*[2]', timeout=2).text
+                lease_term_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="calendar-days-o"]/../*[2]', timeout=1).text
             
             lower = lease_term_text.lower()
             if 'lease' in lower:
@@ -780,7 +780,7 @@ class DetailsInfo:
     def get_bedroom_count(self):
         bedroom_count = None
         try:
-            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bed")]//..//..//div//p', timeout=2)
+            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bed")]//..//..//div//p', timeout=1)
             text = bed_number_element.text.strip()
             if text.isdigit():
                 bedroom_count = int(text)
@@ -797,7 +797,7 @@ class DetailsInfo:
     def get_bathroom_count(self):
         bathroom_count = None
         try:
-            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bath")]//..//..//div//p', timeout=2)
+            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bath")]//..//..//div//p', timeout=1)
             text = bath_number_element.text.strip()
             if text.isdigit():
                 bathroom_count = int(text)
