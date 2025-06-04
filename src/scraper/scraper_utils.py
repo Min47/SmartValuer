@@ -354,7 +354,7 @@ class ListingsInfo:
     
     def get_property_id(self, card):
         try:
-            property_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
+            property_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]', timeout=2)
             property_id = property_id_element.get_attribute('data-listing-id')
         except Exception:
             property_id = None
@@ -363,7 +363,7 @@ class ListingsInfo:
         
     def get_title(self, card):
         try:
-            title = card.find_element(By.XPATH, './/h3[@class="listing-title"]').text
+            title = card.find_element(By.XPATH, './/h3[@class="listing-title"]', timeout=2).text
         except Exception:
             title = None
         finally:
@@ -371,7 +371,7 @@ class ListingsInfo:
         
     def get_address(self, card):
         try:
-            address = card.find_element(By.XPATH, './/div[@class="listing-address"]').text
+            address = card.find_element(By.XPATH, './/div[@class="listing-address"]', timeout=2).text
         except Exception:
             address = None
         finally:
@@ -379,7 +379,7 @@ class ListingsInfo:
         
     def get_property_url(self, card):
         try:
-            property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
+            property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]', timeout=2).get_attribute('href')
         except Exception:
             property_url = None
         finally:
@@ -387,7 +387,7 @@ class ListingsInfo:
         
     def get_availability(self, card):
         try:
-            availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]').text
+            availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]', timeout=2).text
         except Exception:
             availability = None
         finally:
@@ -395,7 +395,7 @@ class ListingsInfo:
         
     def get_project_year(self, card):
         try:
-            year_text = card.find_element(By.XPATH, './/span[@da-id="lc-info-badge"]').text
+            year_text = card.find_element(By.XPATH, './/span[@da-id="lc-info-badge"]', timeout=2).text
             # Look for 'Built: xxxx' or 'New Project: xxxx'
             match = re.search(r'(Built:|New Project:)\s*(\d{4})', year_text)
             project_year = int(match.group(2).strip()) if match else None
@@ -406,7 +406,7 @@ class ListingsInfo:
         
     def get_closest_mrt(self, card):
         try:
-            closest_mrt_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
+            closest_mrt_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]', timeout=2).text
             # Check if the text contains 'from'
             if 'from' in closest_mrt_text:
                 # Extract the MRT station name after 'from'
@@ -422,7 +422,7 @@ class ListingsInfo:
         
     def get_distance_to_closest_mrt(self, card):
         try:
-            distance_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
+            distance_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]', timeout=2).text
             # Look for patterns like '(460 m)', '(1.04 km)', or similar, ensuring it's inside brackets
             match = re.search(r'\(([\d.]+)\s*(km|m)\)', distance_text)
             if match:
@@ -441,7 +441,7 @@ class ListingsInfo:
         
     def get_is_verified_property(self, card):
         try:
-            verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]')
+            verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]', timeout=2)
             is_verified_property = True if verified_element else False
         except Exception:
             is_verified_property = False
@@ -460,7 +460,7 @@ class ListingsInfo:
     
     def get_listed_date(self, card):
         try:
-            listed_date_text = card.find_element(By.XPATH, './/ul[@class="listing-recency"]//span[@class="info-value"]').text
+            listed_date_text = card.find_element(By.XPATH, './/ul[@class="listing-recency"]//span[@class="info-value"]', timeout=2).text
             # Extract the date part after "Listed on"
             match = re.search(r'Listed on\s+(\w+\s\d{1,2},\s\d{4})', listed_date_text)
             if match:
@@ -476,7 +476,7 @@ class ListingsInfo:
         
     def get_agent_name(self, card):
         try:
-            agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]').text
+            agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]', timeout=2).text
         except Exception:
             agent_name = None
         finally:
@@ -484,7 +484,7 @@ class ListingsInfo:
         
     def get_agent_rating(self, card):
         try:
-            agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]').text
+            agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]', timeout=2).text
             # Convert rating to float
             agent_rating = float(agent_rating) if agent_rating else None
         except Exception:
@@ -513,7 +513,7 @@ class ListingsInfo:
         
     def get_selling_price(self, card):
         try:
-            price = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
+            price = card.find_element(By.XPATH, './/div[@class="listing-price"]', timeout=2).text
             # Extract the numeric part of the price
             price_value = re.sub(r"[^\d.]", "", price)
             selling_price = Decimal(price_value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if price_value else None
@@ -524,7 +524,7 @@ class ListingsInfo:
         
     def get_selling_price_text(self, card):
         try:
-            selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
+            selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]', timeout=2).text
         except Exception:
             selling_price_text = None
         finally:
@@ -560,7 +560,7 @@ class DetailsInfo:
 
             # Click 'See All Details' button (might not be present)
             try:
-                details_section = self.sb.find_element(By.XPATH, './/section[@class="details-section"]')
+                details_section = self.sb.find_element(By.XPATH, './/section[@class="details-section"]', timeout=5)
                 self.sb.execute_script("arguments[0].scrollIntoView();", details_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="details-section"]', timeout=5)
                 # Try to find the 'See All Details' button
@@ -570,7 +570,7 @@ class DetailsInfo:
                     see_all_details_button = buttons[0]
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_details_button)
                     self.sb.execute_script("arguments[0].click();", see_all_details_button)
-                    self.sb.sleep(0.1)
+                    self.sb.sleep(1)
                 # Extract the details (from modal if button, else from section)
                 details['property_type'], details['property_type_text'] = self.get_property_type(is_button_present)
                 details['lease_term'], details['lease_term_text'] = self.get_lease_term(is_button_present)
@@ -583,7 +583,7 @@ class DetailsInfo:
                 # Try to close the modal if it was opened
                 if is_button_present:
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]')
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
                         self.sb.execute_script("arguments[0].click();", close_button)
@@ -604,7 +604,7 @@ class DetailsInfo:
 
             # Click 'See All x Amenities' button (might not be present)
             try:
-                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]')
+                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
                 self.sb.execute_script("arguments[0].scrollIntoView();", amenities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
                 # Try to find the 'See All Amenities' button
@@ -617,7 +617,7 @@ class DetailsInfo:
                     details['raw_amenities_text'] = self.get_raw_amenities_text(is_button_present=True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]')
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
@@ -629,7 +629,7 @@ class DetailsInfo:
 
             # Click 'See All x Facilities' button (might not be present)
             try:
-                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]')
+                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
                 self.sb.execute_script("arguments[0].scrollIntoView();", facilities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
                 # Try to find the 'See All Facilities' button
@@ -642,7 +642,7 @@ class DetailsInfo:
                     details['raw_facilities_text'] = self.get_raw_facilities_text(is_button_present=True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]')
+                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=2)
                         self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
@@ -698,13 +698,13 @@ class DetailsInfo:
         try:
             # Try to get subtitle
             try:
-                subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]').text
+                subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]', timeout=2).text
             except Exception:
                 subtitle = None
 
             # Try to get main description
             try:
-                description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]').text
+                description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]', timeout=2).text
             except Exception:
                 description = None
 
@@ -729,9 +729,9 @@ class DetailsInfo:
         property_type_text = None
         try:
             if is_button_present:
-                property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]').text
+                property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]', timeout=2).text
             else:
-                property_type_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="home-open-o"]/../*[2]').text
+                property_type_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="home-open-o"]/../*[2]', timeout=2).text
             
             # Extract the part before " for "
             match = re.match(r"(.+?)\s+for\s+", property_type_text, re.IGNORECASE)
@@ -761,9 +761,9 @@ class DetailsInfo:
         lease_term_text = None
         try:
             if is_button_present:
-                lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]').text
+                lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]', timeout=2).text
             else:
-                lease_term_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="calendar-days-o"]/../*[2]').text
+                lease_term_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="calendar-days-o"]/../*[2]', timeout=2).text
             
             lower = lease_term_text.lower()
             if 'lease' in lower:
@@ -797,7 +797,7 @@ class DetailsInfo:
     def get_bathroom_count(self):
         bathroom_count = None
         try:
-            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bath")]//..//..//div//p')
+            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bath")]//..//..//div//p', timeout=2)
             text = bath_number_element.text.strip()
             if text.isdigit():
                 bathroom_count = int(text)
