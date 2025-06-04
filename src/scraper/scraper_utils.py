@@ -780,7 +780,7 @@ class DetailsInfo:
     def get_bedroom_count(self):
         bedroom_count = None
         try:
-            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[@alt="Beds"]//..//..//div//p')
+            bed_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bed")]//..//..//div//p')
             text = bed_number_element.text.strip()
             if text.isdigit():
                 bedroom_count = int(text)
@@ -797,7 +797,7 @@ class DetailsInfo:
     def get_bathroom_count(self):
         bathroom_count = None
         try:
-            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[@alt="Baths"]//..//..//div//p')
+            bath_number_element = self.sb.find_element(By.XPATH, './/div[@class="amenity"]//span//img[contains(@alt, "Bath")]//..//..//div//p')
             text = bath_number_element.text.strip()
             if text.isdigit():
                 bathroom_count = int(text)
