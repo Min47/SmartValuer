@@ -604,7 +604,7 @@ class DetailsInfo:
 
             # Click 'See All x Amenities' button (might not be present)
             try:
-                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
+                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=2)
                 self.sb.execute_script("arguments[0].scrollIntoView();", amenities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
                 # Try to find the 'See All Amenities' button
@@ -629,7 +629,7 @@ class DetailsInfo:
 
             # Click 'See All x Facilities' button (might not be present)
             try:
-                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
+                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=2)
                 self.sb.execute_script("arguments[0].scrollIntoView();", facilities_section)
                 self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
                 # Try to find the 'See All Facilities' button
