@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import csv
 import os
 import random
@@ -360,7 +360,7 @@ class ListingsInfo:
     def get_title(self, card):
         try:
             title = card.find_element(By.XPATH, './/h3[@class="listing-title"]').text
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             title = None
         finally:
             return title
@@ -368,7 +368,7 @@ class ListingsInfo:
     def get_address(self, card):
         try:
             address = card.find_element(By.XPATH, './/div[@class="listing-address"]').text
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             address = None
         finally:
             return address
@@ -376,7 +376,7 @@ class ListingsInfo:
     def get_property_url(self, card):
         try:
             property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             property_url = None
         finally:
             return property_url
@@ -384,7 +384,7 @@ class ListingsInfo:
     def get_availability(self, card):
         try:
             availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]').text
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             availability = None
         finally:
             return availability
@@ -395,7 +395,7 @@ class ListingsInfo:
             # Look for 'Built: xxxx' or 'New Project: xxxx'
             match = re.search(r'(Built:|New Project:)\s*(\d{4})', year_text)
             project_year = int(match.group(2).strip()) if match else None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             project_year = None
         finally:
             return project_year
@@ -411,7 +411,7 @@ class ListingsInfo:
             else:
                 # Take the whole string if 'from' is not present
                 closest_mrt = closest_mrt_text.strip() if closest_mrt_text else None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             closest_mrt = None  # Element not found
         finally:
             return closest_mrt
@@ -430,7 +430,7 @@ class ListingsInfo:
                     distance_to_closest_mrt = int(distance_value)  # Cast to int
             else:
                 distance_to_closest_mrt = None  # No valid distance found
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             distance_to_closest_mrt = None  # Element not found
         finally:
             return distance_to_closest_mrt
@@ -449,7 +449,7 @@ class ListingsInfo:
             everyone_welcomed_element = card.find_elements(By.XPATH, './/span[@da-id="lc-info-badge"]')
             # Convert text to lowercase and check if it contains 'everyone welcome'
             is_everyone_welcomed = any("everyone welcome" in element.text.lower() for element in everyone_welcomed_element)
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             is_everyone_welcomed = False
         finally:
             return is_everyone_welcomed
@@ -462,10 +462,10 @@ class ListingsInfo:
             if match:
                 # Parse the extracted date string into a datetime object
                 date_str = match.group(1).strip()
-                listed_date = datetime.strptime(date_str, "%B %d, %Y").date()  # Convert to YYYY-MM-DD format
+                listed_date = datetime.strptime(date_str, "%b %d, %Y").date()  # Convert to YYYY-MM-DD format
             else:
                 listed_date = None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             listed_date = None
         finally:
             return listed_date
@@ -473,7 +473,7 @@ class ListingsInfo:
     def get_agent_name(self, card):
         try:
             agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]').text
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             agent_name = None
         finally:
             return agent_name
@@ -483,7 +483,7 @@ class ListingsInfo:
             agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]').text
             # Convert rating to float
             agent_rating = float(agent_rating) if agent_rating else None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             agent_rating = None
         finally:
             return agent_rating
@@ -513,7 +513,7 @@ class ListingsInfo:
             # Extract the numeric part of the price
             price_value = re.sub(r"[^\d.]", "", price)
             selling_price = Decimal(price_value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if price_value else None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             selling_price = None
         finally:
             return selling_price
@@ -521,7 +521,7 @@ class ListingsInfo:
     def get_selling_price_text(self, card):
         try:
             selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             selling_price_text = None
         finally:
             return selling_price_text
@@ -695,13 +695,13 @@ class DetailsInfo:
             # Try to get subtitle
             try:
                 subtitle = self.sb.find_element(By.XPATH, './/h3[@class="subtitle"]').text
-            except NoSuchElementException:
+            except (NoSuchElementException, TimeoutException):
                 subtitle = None
 
             # Try to get main description
             try:
                 description = self.sb.find_element(By.XPATH, './/div[@class="description trimmed"]').text
-            except NoSuchElementException:
+            except (NoSuchElementException, TimeoutException):
                 description = None
 
             # Combine subtitle and description if present
@@ -747,7 +747,7 @@ class DetailsInfo:
                 property_type = 'Landed'
             else:
                 property_type = None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             pass
         finally:
             return property_type, property_type_text
@@ -768,7 +768,7 @@ class DetailsInfo:
                 lease_term = 'Freehold'
             else:
                 lease_term = None
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             pass
         finally:
             return lease_term, lease_term_text
@@ -785,7 +785,7 @@ class DetailsInfo:
                 match = re.search(r'(\d+)', text)
                 if match:
                     bedroom_count = int(match.group(1))
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             pass
         finally:
             return bedroom_count
@@ -802,7 +802,7 @@ class DetailsInfo:
                 match = re.search(r'(\d+)', text)
                 if match:
                     bathroom_count = int(match.group(1))
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             pass
         finally:
             return bathroom_count
