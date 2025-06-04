@@ -155,8 +155,12 @@ class ScraperUtils:
     def scrape_details(self, max_scrape=5):
         # Database Query #
         properties_pending = self.session.query(Properties).filter_by(details_fetched=False).all()
-        properties_pending_limited = properties_pending[:max_scrape] if max_scrape > 0 else properties_pending
-        properties = properties_pending_limited if max_scrape > 0 else properties_pending
+        if max_scrape is None:
+            properties = properties_pending  # Scrape all
+        else:
+            properties = properties_pending[:max_scrape]  # Scrape up to max_scrape
+
+        # Lines #
         lines = [
             "= Scraping Details",
             f"= Properties Pending: {len(properties_pending)}",
