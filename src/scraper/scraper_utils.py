@@ -22,7 +22,7 @@ class ScraperUtils:
         self.cur_details = {}
         self.csv_details = []
 
-    def scrape_listings(self, desired_pages=None):
+    def scrape_listings(self, desired_pages=2):
         cur_page = 1
         max_pages = 99  # Temporary default value for maximum pages
 

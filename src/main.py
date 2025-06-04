@@ -20,13 +20,18 @@ class Prep:
         self.unit_types = self.parse_unit_types()
         self.run_initial_listings = self.get_env_bool("RUN_INITIAL_LISTINGS", default="true")
         self.run_initial_details = self.get_env_bool("RUN_INITIAL_DETAILS", default="true")
+        self.initial_listings_desired_pages = int(self.get_env_var("INITIAL_LISTINGS_DESIRED_PAGES", "2"))
+        self.initial_details_max_scrape = None if self.get_env_var("INITIAL_DETAILS_MAX_SCRAPE", "5") is None else int(self.get_env_var("INITIAL_DETAILS_MAX_SCRAPE", "5"))
 
         self.validate_input()
         self.setup_csvs()
         self.session = self.setup_database()
 
     def get_env_var(self, key, default=None):
-        return os.environ.get(key, self.env.get(key, default))
+        val = os.environ.get(key, self.env.get(key, default))
+        if val is not None and str(val).lower() == "none":
+            return None
+        return val
     
     def get_env_bool(self, key, default="false"):
         return self.get_env_var(key, default).lower() == "true"
@@ -115,7 +120,7 @@ if __name__ == '__main__':
                         scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=None)
                         PropertyGuruInitialScraper.run_scraper_listings(
                             scraper=scraper, 
-                            desired_pages=2,
+                            desired_pages=prep.initial_listings_desired_pages,
                             listings_csv_path=prep.properties_csv_path
                         )
                     time.sleep(30)
@@ -125,7 +130,7 @@ if __name__ == '__main__':
                 scraper = ScraperUtils(session=sess, mode=None, unit_type=None, last_posted=None)
                 PropertyGuruInitialScraper.run_scraper_details(
                     scraper=scraper, 
-                    max_scrape=5,
+                    max_scrape=prep.initial_details_max_scrape,
                     details_csv_path=prep.details_csv_path
                 )
     except Exception as e:
