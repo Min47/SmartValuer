@@ -196,7 +196,10 @@ class ScraperUtils:
                     #     f.write(sb.get_page_source())
 
                     # Checking if we are in the details page instead of the listings page #
-                    if not sb.find_elements('.//div[@class="property-snapshot-section"]'):
+                    if not (
+                        sb.find_elements('.//div[@class="property-snapshot-section"]') or
+                        sb.find_elements('.//div[@da-id="developer-property-overview-root"]')
+                    ):
                         print("= Details Page Not Found\n")
                         Properties.update_field_value(
                             property_id=prop.property_id, 
