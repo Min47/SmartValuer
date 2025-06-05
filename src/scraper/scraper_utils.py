@@ -591,9 +591,7 @@ class DetailsInfo:
                 # Try to close the modal if it was opened
                 if is_button_present:
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
-                        self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
-                        self.sb.wait_for_element_visible(By.XPATH, './/div[@da-id="property-details-modal-header"]//button[@da-id="modal-close-button"]', timeout=5)
+                        close_button = self.sb.find_element(By.XPATH, './/button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
                         pass
@@ -612,9 +610,9 @@ class DetailsInfo:
 
             # Click 'See All x Amenities' button (might not be present)
             try:
-                amenities_section = self.sb.find_element(By.XPATH, './/section[@class="property-amenities-section"]', timeout=1)
+                amenities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Amenities")]/..', timeout=3)
                 self.sb.execute_script("arguments[0].scrollIntoView();", amenities_section)
-                self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-amenities-section"]', timeout=5)
+                self.sb.wait_for_element_visible(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Amenities")]/..', timeout=5)
                 # Try to find the 'See All Amenities' button
                 buttons = amenities_section.find_elements(By.XPATH, './/button[@da-id="amenities-see-all-btn"]')
                 if buttons:
@@ -622,24 +620,23 @@ class DetailsInfo:
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_amenities_button)
                     self.sb.execute_script("arguments[0].click();", see_all_amenities_button)
                     self.sb.sleep(0.1)
-                    details['raw_amenities_text'] = self.get_raw_amenities_text(is_button_present=True)
+                    details['raw_amenities_text'] = self.get_raw_amenities_text(True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
-                        self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
+                        close_button = self.sb.find_element(By.XPATH, './/button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
                         pass
                 else:
-                    details['raw_amenities_text'] = self.get_raw_amenities_text(is_button_present=False)
+                    details['raw_amenities_text'] = self.get_raw_amenities_text(False, amenities_section)
             except Exception:
                 details['raw_amenities_text'] = None
 
             # Click 'See All x Facilities' button (might not be present)
             try:
-                facilities_section = self.sb.find_element(By.XPATH, './/section[@class="property-facilities-section"]', timeout=1)
+                facilities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Common facilities")]/..', timeout=3)
                 self.sb.execute_script("arguments[0].scrollIntoView();", facilities_section)
-                self.sb.wait_for_element_visible(By.XPATH, './/section[@class="property-facilities-section"]', timeout=5)
+                self.sb.wait_for_element_visible(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Common facilities")]/..', timeout=5)
                 # Try to find the 'See All Facilities' button
                 buttons = facilities_section.find_elements(By.XPATH, './/button[@da-id="facilities-see-all-btn"]')
                 if buttons:
@@ -647,17 +644,16 @@ class DetailsInfo:
                     self.sb.execute_script("arguments[0].scrollIntoView();", see_all_facilities_button)
                     self.sb.execute_script("arguments[0].click();", see_all_facilities_button)
                     self.sb.sleep(0.1)
-                    details['raw_facilities_text'] = self.get_raw_facilities_text(is_button_present=True)
+                    details['raw_facilities_text'] = self.get_raw_facilities_text(True)
                     # Try to close the modal
                     try:
-                        close_button = self.sb.find_element(By.XPATH, './/div[@da-id="facilities-amenities-modal-header"]//button[@da-id="modal-close-button"]', timeout=1)
-                        self.sb.execute_script("arguments[0].scrollIntoView();", close_button)
+                        close_button = self.sb.find_element(By.XPATH, './/button[@da-id="modal-close-button"]', timeout=1)
                         self.sb.execute_script("arguments[0].click();", close_button)
                     except Exception:
                         pass
                 else:
-                    details['raw_facilities_text'] = self.get_raw_facilities_text(is_button_present=False)
-            except Exception:
+                    details['raw_facilities_text'] = self.get_raw_facilities_text(False, facilities_section)
+            except Exception as e:
                 details['raw_facilities_text'] = None
 
             # Print the extracted information for debugging
@@ -737,7 +733,13 @@ class DetailsInfo:
         property_type_text = None
         try:
             if is_button_present:
-                property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]', timeout=1).text
+                try:
+                    property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="home-open-o"]/../*[2]', timeout=1).text
+                except Exception:
+                    try:
+                        property_type_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="buildings-o"]/../*[2]', timeout=1).text
+                    except Exception:
+                        return property_type, property_type_text
             else:
                 property_type_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="home-open-o"]/../*[2]', timeout=1).text
             
@@ -769,7 +771,13 @@ class DetailsInfo:
         lease_term_text = None
         try:
             if is_button_present:
-                lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]', timeout=1).text
+                try:
+                    lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-days-o"]/../*[2]', timeout=1).text
+                except Exception:
+                    try:
+                        lease_term_text = self.sb.find_element(By.XPATH, './/div[@class="property-modal-body-wrapper"]//img[@alt="calendar-time-o"]/../*[2]', timeout=1).text
+                    except Exception:
+                        return lease_term, lease_term_text
             else:
                 lease_term_text = self.sb.find_element(By.XPATH, './/div[@da-id="property-details"]//img[@alt="calendar-days-o"]/../*[2]', timeout=1).text
             
@@ -823,6 +831,8 @@ class DetailsInfo:
         furnishing = None
         if is_button_present:
             elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            if not elements or all(not el.text.strip() for el in elements):
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
         else:
             elements = self.sb.find_elements(By.XPATH, './/div[@da-id="property-details"]//td//img//..//div')
         for el in elements:
@@ -842,6 +852,8 @@ class DetailsInfo:
         floor_size_sqft = None
         if is_button_present:
             elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            if not elements or all(not el.text.strip() for el in elements):
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
         else:
             elements = self.sb.find_elements(By.XPATH, './/div[@da-id="property-details"]//td//img//..//div')
         for el in elements:
@@ -856,6 +868,8 @@ class DetailsInfo:
         land_size_sqft = None
         if is_button_present:
             elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            if not elements or all(not el.text.strip() for el in elements):
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
         else:
             elements = self.sb.find_elements(By.XPATH, './/div[@da-id="property-details"]//td//img//..//div')
         for el in elements:
@@ -870,6 +884,8 @@ class DetailsInfo:
         psf_floor = None
         if is_button_present:
             elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            if not elements or all(not el.text.strip() for el in elements):
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
         else:
             elements = self.sb.find_elements(By.XPATH, './/div[@da-id="property-details"]//td//img//..//div')
         for el in elements:
@@ -886,6 +902,8 @@ class DetailsInfo:
         psf_land = None
         if is_button_present:
             elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+            if not elements or all(not el.text.strip() for el in elements):
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
         else:
             elements = self.sb.find_elements(By.XPATH, './/div[@da-id="property-details"]//td//img//..//div')
         for el in elements:
@@ -902,6 +920,8 @@ class DetailsInfo:
         if is_button_present:
             try:
                 elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//p')
+                if not elements or all(not el.text.strip() for el in elements):
+                    elements = self.sb.find_elements(By.XPATH, './/div[@class="property-modal-body-wrapper"]//div')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
@@ -914,33 +934,37 @@ class DetailsInfo:
             except Exception:
                 return None
         
-    def get_raw_amenities_text(self, is_button_present=True):
+    def get_raw_amenities_text(self, is_button_present=True, amenities_section=None):
         if is_button_present:
             try:
-                elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilties-modal-body-wrapper"]//p')
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilities-modal-body modal-body"]/p')
+                if not elements or all(not el.text.strip() for el in elements):
+                    elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilities-modal-body modal-body"]/div')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
                 return None
         else:
             try:
-                elements = self.sb.find_elements(By.XPATH, './/section[@class="property-amenities-section"]//p')
+                elements = amenities_section.find_elements(By.XPATH, './/section[@class="property-amenities-section"]//p')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
                 return None
         
-    def get_raw_facilities_text(self, is_button_present=True):
+    def get_raw_facilities_text(self, is_button_present=True, facilities_section=None):
         if is_button_present:
             try:
-                elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilties-modal-body-wrapper"]//p')
+                elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilities-modal-body modal-body"]/p')
+                if not elements or all(not el.text.strip() for el in elements):
+                    elements = self.sb.find_elements(By.XPATH, './/div[@class="amenities-facilities-modal-body modal-body"]/div')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
                 return None
         else:
             try:
-                elements = self.sb.find_elements(By.XPATH, './/section[@class="property-facilities-section"]//p')
+                elements = facilities_section.find_elements(By.XPATH, './/section[@class="property-facilities-section"]//p')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
