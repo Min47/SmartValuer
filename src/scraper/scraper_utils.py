@@ -354,7 +354,7 @@ class ListingsInfo:
     
     def get_property_id(self, card):
         try:
-            property_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]', timeout=2)
+            property_id_element = card.find_element(By.XPATH, './/div[@data-listing-id]')
             property_id = property_id_element.get_attribute('data-listing-id')
         except Exception:
             property_id = None
@@ -363,7 +363,7 @@ class ListingsInfo:
         
     def get_title(self, card):
         try:
-            title = card.find_element(By.XPATH, './/h3[@class="listing-title"]', timeout=2).text
+            title = card.find_element(By.XPATH, './/h3[@class="listing-title"]').text
         except Exception:
             title = None
         finally:
@@ -371,7 +371,7 @@ class ListingsInfo:
         
     def get_address(self, card):
         try:
-            address = card.find_element(By.XPATH, './/div[@class="listing-address"]', timeout=2).text
+            address = card.find_element(By.XPATH, './/div[@class="listing-address"]').text
         except Exception:
             address = None
         finally:
@@ -379,7 +379,7 @@ class ListingsInfo:
         
     def get_property_url(self, card):
         try:
-            property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]', timeout=2).get_attribute('href')
+            property_url = card.find_element(By.XPATH, './/a[@class="listing-card-link"]').get_attribute('href')
         except Exception:
             property_url = None
         finally:
@@ -387,7 +387,7 @@ class ListingsInfo:
         
     def get_availability(self, card):
         try:
-            availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]', timeout=2).text
+            availability = card.find_element(By.XPATH, './/span[@da-id="lc-price-badge"]').text
         except Exception:
             availability = None
         finally:
@@ -395,7 +395,7 @@ class ListingsInfo:
         
     def get_project_year(self, card):
         try:
-            year_text = card.find_element(By.XPATH, './/span[@da-id="lc-info-badge"]', timeout=2).text
+            year_text = card.find_element(By.XPATH, './/span[@da-id="lc-info-badge"]').text
             # Look for 'Built: xxxx' or 'New Project: xxxx'
             match = re.search(r'(Built:|New Project:)\s*(\d{4})', year_text)
             project_year = int(match.group(2).strip()) if match else None
@@ -406,7 +406,7 @@ class ListingsInfo:
         
     def get_closest_mrt(self, card):
         try:
-            closest_mrt_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]', timeout=2).text
+            closest_mrt_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
             # Check if the text contains 'from'
             if 'from' in closest_mrt_text:
                 # Extract the MRT station name after 'from'
@@ -422,7 +422,7 @@ class ListingsInfo:
         
     def get_distance_to_closest_mrt(self, card):
         try:
-            distance_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]', timeout=2).text
+            distance_text = card.find_element(By.XPATH, './/span[@class="listing-location-value"]').text
             # Look for patterns like '(460 m)', '(1.04 km)', or similar, ensuring it's inside brackets
             match = re.search(r'\(([\d.]+)\s*(km|m)\)', distance_text)
             if match:
@@ -441,7 +441,7 @@ class ListingsInfo:
         
     def get_is_verified_property(self, card):
         try:
-            verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]', timeout=2)
+            verified_element = card.find_element(By.XPATH, './/span[@da-id="verified-listing-badge-button"]')
             is_verified_property = True if verified_element else False
         except Exception:
             is_verified_property = False
@@ -460,7 +460,7 @@ class ListingsInfo:
     
     def get_listed_date(self, card):
         try:
-            listed_date_text = card.find_element(By.XPATH, './/ul[@class="listing-recency"]//span[@class="info-value"]', timeout=2).text
+            listed_date_text = card.find_element(By.XPATH, './/ul[@class="listing-recency"]//span[@class="info-value"]').text
             # Extract the date part after "Listed on"
             match = re.search(r'Listed on\s+(\w+\s\d{1,2},\s\d{4})', listed_date_text)
             if match:
@@ -476,7 +476,7 @@ class ListingsInfo:
         
     def get_agent_name(self, card):
         try:
-            agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]', timeout=2).text
+            agent_name = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//a[@da-id="lc-agent-name"]').text
         except Exception:
             agent_name = None
         finally:
@@ -484,7 +484,7 @@ class ListingsInfo:
         
     def get_agent_rating(self, card):
         try:
-            agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]', timeout=2).text
+            agent_rating = card.find_element(By.XPATH, './/div[@class="agent-info-group"]//span[@class="rating-value"]').text
             # Convert rating to float
             agent_rating = float(agent_rating) if agent_rating else None
         except Exception:
@@ -513,7 +513,7 @@ class ListingsInfo:
         
     def get_selling_price(self, card):
         try:
-            price = card.find_element(By.XPATH, './/div[@class="listing-price"]', timeout=2).text
+            price = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
             # Extract the numeric part of the price
             price_value = re.sub(r"[^\d.]", "", price)
             selling_price = Decimal(price_value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if price_value else None
@@ -524,7 +524,7 @@ class ListingsInfo:
         
     def get_selling_price_text(self, card):
         try:
-            selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]', timeout=2).text
+            selling_price_text = card.find_element(By.XPATH, './/div[@class="listing-price"]').text
         except Exception:
             selling_price_text = None
         finally:
