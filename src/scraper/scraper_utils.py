@@ -946,7 +946,7 @@ class DetailsInfo:
                 return None
         else:
             try:
-                elements = amenities_section.find_elements(By.XPATH, './/section[@class="property-amenities-section"]//p')
+                elements = amenities_section.find_elements(By.XPATH, './/p')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
@@ -964,7 +964,7 @@ class DetailsInfo:
                 return None
         else:
             try:
-                elements = facilities_section.find_elements(By.XPATH, './/section[@class="property-facilities-section"]//p')
+                elements = facilities_section.find_elements(By.XPATH, './/p')
                 all_texts = [el.text.strip() for el in elements if el.text.strip()]
                 return ' || '.join(all_texts)
             except Exception:
