@@ -20,7 +20,7 @@ class Prep:
         self.unit_types = self.parse_unit_types()
         self.run_listings = self.get_env_bool("RUN_LISTINGS", default="true")
         self.run_details = self.get_env_bool("RUN_DETAILS", default="true")
-        self.listings_desired_pages = int(self.get_env_var("LISTINGS_DESIRED_PAGES", "2"))
+        self.listings_desired_pages = None if self.get_env_var("LISTINGS_DESIRED_PAGES", "2") is None else int(self.get_env_var("LISTINGS_DESIRED_PAGES", "2"))
         self.details_max_scrape = None if self.get_env_var("DETAILS_MAX_SCRAPE", "5") is None else int(self.get_env_var("DETAILS_MAX_SCRAPE", "5"))
         self.last_posted = int(self.get_env_var("LAST_POSTED", "2"))
 
