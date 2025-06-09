@@ -1,6 +1,6 @@
-# src/scraper/initial_full_scrape.py
+# src/scraper/scraper.py
 
-class PropertyGuruInitialScraper:
+class PropertyGuruScraper:
     @staticmethod
     def run_scraper_listings(scraper, desired_pages, listings_csv_path):
         try:

@@ -1,6 +1,6 @@
 # src/main.py
 from dotenv import dotenv_values
-from scraper.scraper import PropertyGuruInitialScraper
+from scraper.scraper import PropertyGuruScraper
 from scraper.scraper_utils import ScraperUtils
 from sqlalchemy import text
 import database
@@ -119,7 +119,7 @@ if __name__ == '__main__':
                         continue
                     with database.Session() as sess:
                         scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=prep.last_posted)
-                        PropertyGuruInitialScraper.run_scraper_listings(
+                        PropertyGuruScraper.run_scraper_listings(
                             scraper=scraper, 
                             desired_pages=prep.listings_desired_pages,
                             listings_csv_path=prep.properties_csv_path
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         if prep.run_details:
             with database.Session() as sess:
                 scraper = ScraperUtils(session=sess, mode=None, unit_type=None, last_posted=None)
-                PropertyGuruInitialScraper.run_scraper_details(
+                PropertyGuruScraper.run_scraper_details(
                     scraper=scraper, 
                     max_scrape=prep.details_max_scrape,
                     details_csv_path=prep.details_csv_path
