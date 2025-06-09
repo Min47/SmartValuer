@@ -22,6 +22,7 @@ class Prep:
         self.run_details = self.get_env_bool("RUN_DETAILS", default="true")
         self.listings_desired_pages = int(self.get_env_var("LISTINGS_DESIRED_PAGES", "2"))
         self.details_max_scrape = None if self.get_env_var("DETAILS_MAX_SCRAPE", "5") is None else int(self.get_env_var("DETAILS_MAX_SCRAPE", "5"))
+        self.last_posted = int(self.get_env_var("LAST_POSTED", "2"))
 
         self.validate_input()
         self.setup_csvs()
@@ -117,7 +118,7 @@ if __name__ == '__main__':
                     if mode == "Buy" and unit_type == -1:
                         continue
                     with database.Session() as sess:
-                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=None)
+                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=prep.last_posted)
                         PropertyGuruInitialScraper.run_scraper_listings(
                             scraper=scraper, 
                             desired_pages=prep.listings_desired_pages,
