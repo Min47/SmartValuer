@@ -1,6 +1,6 @@
 # src/main.py
 from dotenv import dotenv_values
-from scraper.initial_full_scrape import PropertyGuruInitialScraper
+from scraper.scraper import PropertyGuruInitialScraper
 from scraper.scraper_utils import ScraperUtils
 from sqlalchemy import text
 import database
@@ -18,10 +18,10 @@ class Prep:
         self.db_config = self.get_db_config()
         self.modes = self.parse_modes()
         self.unit_types = self.parse_unit_types()
-        self.run_initial_listings = self.get_env_bool("RUN_INITIAL_LISTINGS", default="true")
-        self.run_initial_details = self.get_env_bool("RUN_INITIAL_DETAILS", default="true")
-        self.initial_listings_desired_pages = int(self.get_env_var("INITIAL_LISTINGS_DESIRED_PAGES", "2"))
-        self.initial_details_max_scrape = None if self.get_env_var("INITIAL_DETAILS_MAX_SCRAPE", "5") is None else int(self.get_env_var("INITIAL_DETAILS_MAX_SCRAPE", "5"))
+        self.run_listings = self.get_env_bool("RUN_LISTINGS", default="true")
+        self.run_details = self.get_env_bool("RUN_DETAILS", default="true")
+        self.listings_desired_pages = int(self.get_env_var("LISTINGS_DESIRED_PAGES", "2"))
+        self.details_max_scrape = None if self.get_env_var("DETAILS_MAX_SCRAPE", "5") is None else int(self.get_env_var("DETAILS_MAX_SCRAPE", "5"))
 
         self.validate_input()
         self.setup_csvs()
@@ -79,9 +79,9 @@ class Prep:
                     print(f"❌ Error Deleting old CSV file {file}: {e}")
             return path
     
-        if self.run_initial_listings:
+        if self.run_listings:
             self.properties_csv_path = create_and_cleanup_csv("PROPERTIES_CSV_PATH", "properties.csv")
-        if self.run_initial_details:
+        if self.run_details:
             self.details_csv_path = create_and_cleanup_csv("DETAILS_CSV_PATH", "details.csv")
 
     def setup_database(self):
@@ -110,8 +110,8 @@ if __name__ == '__main__':
         # --- Preparation Phase --- #
         prep = Prep()
 
-        # --- Initial Scraper Phase --- #
-        if prep.run_initial_listings:
+        # --- Scraper Phase --- #
+        if prep.run_listings:
             for mode in prep.modes:
                 for unit_type in prep.unit_types:
                     if mode == "Buy" and unit_type == -1:
@@ -120,17 +120,17 @@ if __name__ == '__main__':
                         scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=None)
                         PropertyGuruInitialScraper.run_scraper_listings(
                             scraper=scraper, 
-                            desired_pages=prep.initial_listings_desired_pages,
+                            desired_pages=prep.listings_desired_pages,
                             listings_csv_path=prep.properties_csv_path
                         )
                     time.sleep(30)
 
-        if prep.run_initial_details:
+        if prep.run_details:
             with database.Session() as sess:
                 scraper = ScraperUtils(session=sess, mode=None, unit_type=None, last_posted=None)
                 PropertyGuruInitialScraper.run_scraper_details(
                     scraper=scraper, 
-                    max_scrape=prep.initial_details_max_scrape,
+                    max_scrape=prep.details_max_scrape,
                     details_csv_path=prep.details_csv_path
                 )
     except Exception as e:
