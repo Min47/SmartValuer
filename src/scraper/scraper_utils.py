@@ -68,7 +68,7 @@ class ScraperUtils:
                     print(f"> URL: {url}")
                     
                     # Solve captcha
-                    sb.uc_open_with_reconnect(url, 4)
+                    sb.uc_open_with_reconnect(url, None)
                     sb.uc_gui_click_captcha()
                     sb.sleep(2)
 
@@ -187,9 +187,9 @@ class ScraperUtils:
             for idx, prop in enumerate(properties, 1):
                 try:
                     print(f"= [{idx}/{len(properties)}] ID: {prop.property_id} | Title: {prop.title} | URL: {prop.property_url}")
-                    sb.uc_open_with_reconnect(prop.property_url, 4)
+                    sb.uc_open_with_reconnect(prop.property_url, None)
                     sb.uc_gui_click_captcha()
-                    sb.sleep(0.5)
+                    sb.sleep(2)
 
                     # # Save the HTML content to a file for debugging (optional)
                     # with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
@@ -570,7 +570,6 @@ class DetailsInfo:
             try:
                 details_section = self.sb.find_element(By.XPATH, './/section[@class="details-section"]', timeout=2)
                 self.sb.execute_script("arguments[0].scrollIntoView();", details_section)
-                self.sb.wait_for_element_visible(By.XPATH, './/section[@class="details-section"]', timeout=5)
                 # Try to find the 'See All Details' button
                 buttons = details_section.find_elements(By.XPATH, './/button[@da-id="meta-table-see-more-btn"]')
                 is_button_present = bool(buttons)
@@ -610,9 +609,8 @@ class DetailsInfo:
 
             # Click 'See All x Amenities' button (might not be present)
             try:
-                amenities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Amenities")]/..', timeout=3)
+                amenities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Amenities")]/..', timeout=1)
                 self.sb.execute_script("arguments[0].scrollIntoView();", amenities_section)
-                self.sb.wait_for_element_visible(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Amenities")]/..', timeout=5)
                 # Try to find the 'See All Amenities' button
                 buttons = amenities_section.find_elements(By.XPATH, './/button[@da-id="amenities-see-all-btn"]')
                 if buttons:
@@ -634,9 +632,8 @@ class DetailsInfo:
 
             # Click 'See All x Facilities' button (might not be present)
             try:
-                facilities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Common facilities")]/..', timeout=3)
+                facilities_section = self.sb.find_element(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Common facilities")]/..', timeout=1)
                 self.sb.execute_script("arguments[0].scrollIntoView();", facilities_section)
-                self.sb.wait_for_element_visible(By.XPATH, './/*[@da-id="facilities-amenities-title" and contains(text(), "Common facilities")]/..', timeout=5)
                 # Try to find the 'See All Facilities' button
                 buttons = facilities_section.find_elements(By.XPATH, './/button[@da-id="facilities-see-all-btn"]')
                 if buttons:
