@@ -2,3 +2,4 @@
 *.html
 data/
 downloaded_files/
+logs/
