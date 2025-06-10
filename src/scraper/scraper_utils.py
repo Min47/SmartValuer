@@ -57,20 +57,36 @@ class ScraperUtils:
                     # Construct the URL based on the filters
                     if self.mode == "Rent":
                         if self.last_posted is None:
-                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&isNewProject=false"
                         else:
-                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&lastPosted={self.last_posted}"
+                            url = f"https://www.propertyguru.com.sg/property-for-rent/{cur_page}?listingType=rent&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&lastPosted={self.last_posted}&isNewProject=false"
                     elif self.mode == "Buy":
                         if self.last_posted is None:
-                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}"
+                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&page={cur_page}&isCommercial=false&bedrooms={self.unit_type}&sort=date&order=desc&isNewProject=false"
                         else:
-                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&cur_page={cur_page}&isCommercial=false&sort=date&order=desc&bedrooms={self.unit_type}&lastPosted={self.last_posted}"
+                            url = f"https://www.propertyguru.com.sg/property-for-sale/{cur_page}?listingType=sale&page={cur_page}&isCommercial=false&lastPosted={self.last_posted}&bedrooms={self.unit_type}&sort=date&order=desc&isNewProject=false"
                     print(f"> URL: {url}")
                     
                     # Solve captcha
                     sb.uc_open_with_reconnect(url, None)
                     sb.uc_gui_click_captcha()
                     sb.sleep(2)
+
+
+                    # If mode = "Buy", and current URL contains "&isNewProject=true", then open the URL again to bypass the captcha
+                    if self.mode == "Buy" and "&isNewProject=true" in sb.get_current_url():
+                        max_retries = 3
+                        # Print current URL for debugging
+                        print(f"> Current URL: {sb.get_current_url()}")
+                        for attempt in range(1, max_retries + 1):
+                            sb.uc_open_with_reconnect(url, None)
+                            sb.uc_gui_click_captcha()
+                            sb.sleep(2)
+                            print(f"> After Attempt {attempt}: {sb.get_current_url()}")
+                            if "&isNewProject=true" not in sb.get_current_url():
+                                break
+                        else:
+                            print(f"❌ '&isNewProject=true' Still Exists After {max_retries} Attempts. URL: {sb.get_current_url()}")
 
                     # # Save the HTML content to a file for debugging (optional)
                     # with open(f"data/Page_{cur_page}.html", "w", encoding="utf-8") as f:
@@ -111,7 +127,7 @@ class ScraperUtils:
 
                     # Pagination #
                     # Dynamically determine the maximum number of pages
-                    page_items = sb.find_elements('//li[@class="page-item"]')
+                    page_items = sb.find_elements('//li[@class="page-item" or @class="page-item active"]')
                     max_pages = cur_page  # Default fallback
 
                     # Try to find the last numeric page number (skip "Next", "»", etc.)
