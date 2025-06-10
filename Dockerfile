@@ -40,6 +40,10 @@ WORKDIR /app
 # Update timezone
 ENV TZ=Asia/Kuala_Lumpur
 
+# Set locale
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
 # Copy project files
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
