@@ -1,5 +1,5 @@
 # To run in this path:
-# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_rent_6am.ps1
+# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\details_rent_2_3_4_5.ps1
 
 $pairs = @(
     @{ mode = "Rent"; unit = "2" },
@@ -29,8 +29,10 @@ foreach ($pair in $pairs) {
         $dockerCmd = @(
             "run", "--env-file", $envFile,
             "--rm",
-            "-e", "MODES=$($pair.mode)",
-            "-e", "UNIT_TYPES=$($pair.unit)",
+            "-e", "RUN_LISTINGS=false",
+            "-e", "RUN_DETAILS=true",
+            "-e", "DETAILS_MODES=$($pair.mode)",
+            "-e", "DETAILS_UNIT_TYPES=$($pair.unit)",
             "-v", "${mountDir}:/app",
             "smartvaluer-scraper"
         )

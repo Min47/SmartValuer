@@ -1,10 +1,10 @@
 # To run in this path:
-# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_rent_12am.ps1
+# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\details_buy_0_1_2.ps1
 
 $pairs = @(
-    @{ mode = "Rent"; unit = "-1" },
-    @{ mode = "Rent"; unit = "0" },
-    @{ mode = "Rent"; unit = "1" }
+    @{ mode = "Buy"; unit = "0" },
+    @{ mode = "Buy"; unit = "1" },
+    @{ mode = "Buy"; unit = "2" }
 )
 
 $baseDir = Get-Location
@@ -28,8 +28,10 @@ foreach ($pair in $pairs) {
         $dockerCmd = @(
             "run", "--env-file", $envFile,
             "--rm",
-            "-e", "MODES=$($pair.mode)",
-            "-e", "UNIT_TYPES=$($pair.unit)",
+            "-e", "RUN_LISTINGS=false",
+            "-e", "RUN_DETAILS=true",
+            "-e", "DETAILS_MODES=$($pair.mode)",
+            "-e", "DETAILS_UNIT_TYPES=$($pair.unit)",
             "-v", "${mountDir}:/app",
             "smartvaluer-scraper"
         )
