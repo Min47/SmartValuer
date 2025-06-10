@@ -1,5 +1,5 @@
 # To run in this path:
-# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_rent_12am.ps1
+# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_rent_6am.ps1
 
 $pairs = @(
     @{ mode = "Rent"; unit = "2" },
@@ -8,44 +8,36 @@ $pairs = @(
     @{ mode = "Rent"; unit = "5" }
 )
 
-$logDir = Join-Path (Get-Location) "logs"
+$baseDir = Get-Location
+$logDir = Join-Path $baseDir "logs"
+$envFile = Join-Path $baseDir "src\.env"
+$mountDir = $baseDir.Path
+
 if (-not (Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir | Out-Null
 }
 
 foreach ($pair in $pairs) {
-    # Empty line for better readability
     Write-Host ""
 
-    # Create a timestamped log file for each pair
-    $timestamp = Get-Date -Format "yyyyMMdd_HHmmssfff"
+    Start-Job -ScriptBlock {
+        param($pair, $logDir, $envFile, $mountDir)
 
-    # Ensure the log file name is unique
-    $logfile = Join-Path $logDir "scraper_$($pair.mode)_$($pair.unit)_${timestamp}.txt"
+        $timestamp = Get-Date -Format "yyyyMMdd_HHmmssfff"
+        $logfile = Join-Path $logDir "scraper_$($pair.mode)_$($pair.unit)_${timestamp}.txt"
 
-    # Write the header to the log file
-    Write-Host "Preparing to run docker for Mode=$($pair.mode), Unit=$($pair.unit)"
-    Write-Host "Log file will be: $logfile"
-    
-    # Docker command
-    $envFile = Join-Path (Get-Location) "src\.env"
-    $mountDir = (Get-Location).Path
+        $dockerCmd = @(
+            "run", "--env-file", $envFile,
+            "--rm",
+            "-e", "MODES=$($pair.mode)",
+            "-e", "UNIT_TYPES=$($pair.unit)",
+            "-v", "${mountDir}:/app",
+            "smartvaluer-scraper"
+        )
 
-    $dockerCmd = @(
-        "run", "--env-file", $envFile,
-        "--rm",
-        "-e", "MODES=$($pair.mode)",
-        "-e", "UNIT_TYPES=$($pair.unit)",
-        "-v", "${mountDir}:/app",
-        "smartvaluer-scraper"
-    )
-
-    Write-Host "Running docker: docker $($dockerCmd -join ' ')"
-    & docker @dockerCmd *> $logfile
-
-    # After running docker
-    Write-Host "Finished docker for Mode=$($pair.mode), Unit=$($pair.unit)"
-
-    # Empty line for better readability
-    Write-Host ""
+        & docker @dockerCmd *> $logfile
+    } -ArgumentList $pair, $logDir, $envFile, $mountDir
 }
+
+Write-Host ""
+Get-Job | Wait-Job

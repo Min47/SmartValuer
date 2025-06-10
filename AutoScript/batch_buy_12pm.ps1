@@ -1,10 +1,10 @@
 # To run in this path:
-# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_rent_12am.ps1
+# C:\YourUser\Documents\SmartValuer\ > .\AutoScript\batch_buy_12pm.ps1
 
 $pairs = @(
-    @{ mode = "Rent"; unit = "-1" },
-    @{ mode = "Rent"; unit = "0" },
-    @{ mode = "Rent"; unit = "1" }
+    @{ mode = "Buy"; unit = "0" },
+    @{ mode = "Buy"; unit = "1" },
+    @{ mode = "Buy"; unit = "2" }
 )
 
 $baseDir = Get-Location
