@@ -139,9 +139,3 @@ if __name__ == '__main__':
     finally:
         if 'session' in locals():
             prep.session.close()
-
-# import os   
-
-# print("Mode:", os.environ.get("MODES"))
-# print("Unit type:", os.environ.get("UNIT_TYPES"))
-# print("Last posted:", os.environ.get("LAST_POSTED"))
