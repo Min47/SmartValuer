@@ -145,9 +145,6 @@ class ScraperUtils:
                             print("= Maximum Pages: Not Found (no numeric page item)")
                     else:
                         print("= Maximum Pages: Not Found (no page items)")
-                        # Save the page source for debugging
-                        with open(f"data/Error_Page_{cur_page}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html", "w", encoding="utf-8") as f:
-                            f.write(sb.get_page_source())
                     # Also print the desired pages if provided
                     if desired_pages is not None:
                         print(f"= Desired Pages: {desired_pages}")
@@ -170,9 +167,9 @@ class ScraperUtils:
                 except Exception as e:
                     print(f"❌ Error on Page {cur_page}: {e}")
                     # Take a screenshot for debugging
-                    sb.save_screenshot(f"data/Listings_Error_Page_{cur_page}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+                    sb.save_screenshot(f"logs/Listings_Error_Page_{cur_page}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
                     # Save the page source for debugging
-                    with open(f"data/Error_Page_{cur_page}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html", "w", encoding="utf-8") as f:
+                    with open(f"logs/Error_Page_{cur_page}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html", "w", encoding="utf-8") as f:
                         f.write(sb.get_page_source())
                     break
 
