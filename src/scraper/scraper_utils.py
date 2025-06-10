@@ -177,7 +177,7 @@ class ScraperUtils:
         # Database Query #
         properties_pending = self.session.query(Properties).filter_by(
             details_fetched=False,
-            mode=self.mode,
+            property_selling_type=self.mode,
             unit_type="Room" if self.unit_type == -1 else (
                 "Studio" if self.unit_type == 0 else (
                     "5+ Bedroom" if self.unit_type == 5 else
