@@ -1,8 +1,6 @@
 # To run in this path:
 # C:\YourUser\Documents\SmartValuer\ > .\AutoScript\listings_buy.ps1
 
-$OutputEncoding = [System.Text.Encoding]::UTF8
-
 $pairs = @(
     @{ mode = "Buy"; unit = "0" },
     @{ mode = "Buy"; unit = "1" },

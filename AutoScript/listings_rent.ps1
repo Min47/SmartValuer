@@ -1,8 +1,6 @@
 # To run in this path:
 # C:\YourUser\Documents\SmartValuer\ > .\AutoScript\listings_rent.ps1
 
-$OutputEncoding = [System.Text.Encoding]::UTF8
-
 $pairs = @(
     @{ mode = "Rent"; unit = "-1" },
     @{ mode = "Rent"; unit = "0" },
