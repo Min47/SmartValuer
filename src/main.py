@@ -16,8 +16,10 @@ class Prep:
     def __init__(self):
         self.env = dotenv_values(".env")
         self.db_config = self.get_db_config()
-        self.modes = self.parse_modes()
-        self.unit_types = self.parse_unit_types()
+        self.listings_modes = self.parse_listings_modes()
+        self.details_modes = self.parse_details_modes()
+        self.listings_unit_types = self.parse_listings_unit_types()
+        self.details_unit_types = self.parse_details_unit_types()
         self.run_listings = self.get_env_bool("RUN_LISTINGS", default="true")
         self.run_details = self.get_env_bool("RUN_DETAILS", default="true")
         self.listings_desired_pages = None if self.get_env_var("LISTINGS_DESIRED_PAGES", "2") is None else int(self.get_env_var("LISTINGS_DESIRED_PAGES", "2"))
@@ -46,17 +48,23 @@ class Prep:
             "name": self.get_env_var("DATABASE_NAME"),
         }
     
-    def parse_modes(self):
-        return [m.strip() for m in self.get_env_var("MODES", "").split(",") if m.strip()]
+    def parse_listings_modes(self):
+        return [m.strip() for m in self.get_env_var("LISTINGS_MODES", "Rent,Buy").split(",") if m.strip()]
     
-    def parse_unit_types(self):
-        return [int(u.strip()) for u in self.get_env_var("UNIT_TYPES", "").split(",") if u.strip()]
+    def parse_details_modes(self):
+        return [m.strip() for m in self.get_env_var("DETAILS_MODES", "Rent,Buy").split(",") if m.strip()]
+    
+    def parse_listings_unit_types(self):
+        return [int(u.strip()) for u in self.get_env_var("LISTINGS_UNIT_TYPES", "-1,0,1,2,3,4,5").split(",") if u.strip()]
+    
+    def parse_details_unit_types(self):
+        return [int(u.strip()) for u in self.get_env_var("DETAILS_UNIT_TYPES", "-1,0,1,2,3,4,5").split(",") if u.strip()]
 
     def validate_input(self):
-        for mode in self.modes:
+        for mode in self.listings_modes + self.details_modes:
             if mode not in self.ALLOWED_MODES:
                 raise ValueError(f"Invalid mode: {mode}. Allowed: {self.ALLOWED_MODES}")
-        for unit_type in self.unit_types:
+        for unit_type in self.listings_unit_types + self.details_unit_types:
             if unit_type not in self.ALLOWED_UNIT_TYPES:
                 raise ValueError(f"Invalid unit_type: {unit_type}. Allowed: {self.ALLOWED_UNIT_TYPES}")
             
@@ -113,8 +121,8 @@ if __name__ == '__main__':
 
         # --- Scraper Phase --- #
         if prep.run_listings:
-            for mode in prep.modes:
-                for unit_type in prep.unit_types:
+            for mode in prep.listings_modes:
+                for unit_type in prep.listings_unit_types:
                     if mode == "Buy" and unit_type == -1:
                         continue
                     with database.Session() as sess:
@@ -127,13 +135,19 @@ if __name__ == '__main__':
                     time.sleep(30)
 
         if prep.run_details:
-            with database.Session() as sess:
-                scraper = ScraperUtils(session=sess, mode=None, unit_type=None, last_posted=None)
-                PropertyGuruScraper.run_scraper_details(
-                    scraper=scraper, 
-                    max_scrape=prep.details_max_scrape,
-                    details_csv_path=prep.details_csv_path
-                )
+            for mode in prep.details_modes:
+                for unit_type in prep.details_unit_types:
+                    if mode == "Buy" and unit_type == -1:
+                        continue
+                    with database.Session() as sess:
+                        scraper = ScraperUtils(session=sess, mode=mode, unit_type=unit_type, last_posted=None)
+                        PropertyGuruScraper.run_scraper_details(
+                            scraper=scraper, 
+                            max_scrape=prep.details_max_scrape,
+                            details_csv_path=prep.details_csv_path
+                        )
+                    time.sleep(30)
+
     except Exception as e:
         print(f"❌ Error on Main: {e}")
     finally:

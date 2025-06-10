@@ -29,7 +29,7 @@ class ScraperUtils:
         # Filters
         lines = [
             f"= Scraping Mode: {self.mode}",
-            f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type} Bedroom+'}",
+            f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type}+ Bedroom'}",
             f"= Last Posted: {self.last_posted} Days Ago" if self.last_posted is not None else "= Last Posted: None",
             f"= Desired Pages: {desired_pages if desired_pages is not None else 'All'}"
         ]
@@ -162,7 +162,16 @@ class ScraperUtils:
 
     def scrape_details(self, max_scrape=5):
         # Database Query #
-        properties_pending = self.session.query(Properties).filter_by(details_fetched=False).all()
+        properties_pending = self.session.query(Properties).filter_by(
+            details_fetched=False,
+            mode=self.mode,
+            unit_type="Room" if self.unit_type == -1 else (
+                "Studio" if self.unit_type == 0 else (
+                    "5+ Bedroom" if self.unit_type == 5 else
+                    f"{self.unit_type} Bedroom"
+                )
+            ),
+        ).all()
         if max_scrape is None:
             properties = properties_pending  # Scrape all
         else:
@@ -171,6 +180,8 @@ class ScraperUtils:
         # Lines #
         lines = [
             "= Scraping Details",
+            f"= Scraping Mode: {self.mode}",
+            f"= Unit Type: {'Room' if self.unit_type == -1 else 'Studio' if self.unit_type == 0 else f'{self.unit_type} Bedroom' if self.unit_type!= 5 else f'{self.unit_type}+ Bedroom'}",
             f"= Properties Pending: {len(properties_pending)}",
             f"= Properties to Scrape: {len(properties)}",
         ]
