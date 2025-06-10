@@ -77,15 +77,15 @@ class Prep:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             open(path, 'w', encoding='utf-8').close()
 
-            # Cleanup old CSVs for this base path
-            files = [f for f in os.listdir(os.path.dirname(root))
-                     if f.startswith(os.path.basename(root)) and f.endswith('.csv')]
-            files.sort(reverse=True)
-            for file in files[10:]:
-                try:
-                    os.remove(os.path.join(os.path.dirname(root), file))
-                except Exception as e:
-                    print(f"❌ Error Deleting old CSV file {file}: {e}")
+            # # Cleanup old CSVs for this base path
+            # files = [f for f in os.listdir(os.path.dirname(root))
+            #          if f.startswith(os.path.basename(root)) and f.endswith('.csv')]
+            # files.sort(reverse=True)
+            # for file in files[10:]:
+            #     try:
+            #         os.remove(os.path.join(os.path.dirname(root), file))
+            #     except Exception as e:
+            #         print(f"❌ Error Deleting old CSV file {file}: {e}")
             return path
     
         if self.run_listings:
