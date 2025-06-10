@@ -23,7 +23,7 @@ foreach ($pair in $pairs) {
         param($pair, $logDir, $envFile, $mountDir)
 
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmssfff"
-        $logfile = Join-Path $logDir "scraper_$($pair.mode)_$($pair.unit)_${timestamp}.txt"
+        $logfile = Join-Path $logDir "${timestamp}_details_$($pair.mode)_$($pair.unit)_.txt"
 
         $dockerCmd = @(
             "run", "--env-file", $envFile,
