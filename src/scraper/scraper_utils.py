@@ -192,7 +192,6 @@ class ScraperUtils:
                     print(f"= [{idx}/{len(properties)}] ID: {prop.property_id} | Title: {prop.title} | URL: {prop.property_url}")
                     sb.uc_open_with_reconnect(prop.property_url, None)
                     sb.uc_gui_click_captcha()
-                    sb.sleep(2)
 
                     # # Save the HTML content to a file for debugging (optional)
                     # with open(f"data/Details_{idx}.html", "w", encoding="utf-8") as f:
