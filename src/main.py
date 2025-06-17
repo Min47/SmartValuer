@@ -71,10 +71,14 @@ class Prep:
     def setup_csvs(self):
         def create_and_cleanup_csv(env_key, default_path):
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            date_folder = datetime.datetime.now().strftime("%Y-%m-%d")
             base_path = self.get_env_var(env_key, default_path)
             root, ext = os.path.splitext(base_path)
-            path = f"{root}_{timestamp}{ext}"
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            # Insert date folder between root and filename
+            folder = os.path.join(os.path.dirname(root), date_folder)
+            filename = f"{os.path.basename(root)}_{timestamp}{ext}"
+            path = os.path.join(folder, filename)
+            os.makedirs(folder, exist_ok=True)
             open(path, 'w', encoding='utf-8').close()
 
             # # Cleanup old CSVs for this base path
