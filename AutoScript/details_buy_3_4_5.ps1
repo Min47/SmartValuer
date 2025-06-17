@@ -9,11 +9,12 @@ $pairs = @(
 
 $baseDir = Get-Location
 $logDir = Join-Path $baseDir "logs"
+$dateDir = Join-Path $logDir (Get-Date -Format "yyyy-MM-dd")
 $envFile = Join-Path $baseDir "src\.env"
 $mountDir = $baseDir.Path
 
-if (-not (Test-Path $logDir)) {
-    New-Item -ItemType Directory -Path $logDir | Out-Null
+if (-not (Test-Path $dateDir)) {
+    New-Item -ItemType Directory -Path $dateDir | Out-Null
 }
 
 foreach ($pair in $pairs) {
@@ -23,7 +24,7 @@ foreach ($pair in $pairs) {
         param($pair, $logDir, $envFile, $mountDir)
 
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmssfff"
-        $logfile = Join-Path $logDir "${timestamp}_details_$($pair.mode)_$($pair.unit)_.txt"
+        $logfile = Join-Path $dateDir "${timestamp}_details_$($pair.mode)_$($pair.unit)_.txt"
 
         $dockerCmd = @(
             "run", "--env-file", $envFile,
